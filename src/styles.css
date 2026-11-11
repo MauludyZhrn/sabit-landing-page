@@ -158,12 +158,24 @@ button {
   display: flex;
   align-items: center;
   gap: var(--space-md);
+  text-decoration: none;
+  transition: opacity var(--dur-fast) ease;
+}
+
+.brand-lockup:hover {
+  opacity: 0.94;
 }
 
 .brand-logo-img {
-  height: 26px;
+  height: 36px;
   width: auto;
-  filter: brightness(0) invert(1);
+  display: block;
+  object-fit: contain;
+  transition: transform var(--dur-fast) ease;
+}
+
+.brand-lockup:hover .brand-logo-img {
+  transform: translateY(-0.5px);
 }
 
 .brand-version-badge {
@@ -1238,6 +1250,10 @@ html.motion-paused .diag-node {
 }
 
 @media (max-width: 768px) {
+  .brand-logo-img {
+    height: 30px;
+  }
+
   .nav-links {
     display: none;
   }
