@@ -1,0 +1,16 @@
+SABIT — ANTIGRAVITY REVISION PACK
+
+Install / use:
+1. Extract this ZIP into the root of the existing Sabit landing-page workspace. Merge/overwrite the `.agents/skills/sabit-web-design/` folder if prompted; do not replace your whole project.
+2. Check that `.agents/skills/sabit-web-design/SKILL.md` exists.
+3. Open/reload the project in Antigravity and verify the `sabit-web-design` skill is discovered.
+4. Keep the two screenshot references available to Antigravity (attach them in the Agent conversation or keep them in a project reference folder).
+5. Open `ANTIGRAVITY-PROMPT.txt` and send the full prompt to Antigravity.
+6. Use `ANTIGRAVITY-REVISION-GUIDE.md` as the detailed design/technical reference.
+7. Set actual GitHub and installer destinations using `SABIT-LINKS-CONFIG-EXAMPLE.md` only after verifying the repo remote and actual `.exe`/release asset.
+8. Run through `VISUAL-QA-CHECKLIST.md` before publishing.
+
+Important:
+- The pack does not contain Sabit's actual `.exe`, GitHub repository URL, or product screenshots.
+- Antigravity must locate the installer and Git remote in the real workspace. If not found, leave the CTA unconfigured and report it; never invent a link.
+- Preserve the current framework and codebase. This is a revision pack, not a new project scaffold.

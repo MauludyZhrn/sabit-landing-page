@@ -1,0 +1,142 @@
+SABIT — ANTIGRAVITY REVISION PROMPT
+Versi: 2.0 | Fokus: Visual 3D Moon, fluid motion, UX refinement, roadmap, dan download links
+
+BACA DAHULU
+1. Baca `.agents/skills/sabit-web-design/SKILL.md` sampai selesai.
+2. Baca `MOTION-3D-BRIEF.md` dan `ANTIGRAVITY-REVISION-GUIDE.md`.
+3. Gunakan dua screenshot yang diberikan user sebagai bahan audit:
+   - screenshot pertama = kondisi landing page Sabit saat ini;
+   - screenshot kedua = referensi mood dan komposisi visual, bukan template yang boleh disalin mentah.
+4. Pertahankan framework, bundler, dan struktur project yang sudah ada. Jangan membuat ulang project atau migrasi framework tanpa alasan teknis yang kuat.
+
+TUJUAN UTAMA
+Redesign landing page Sabit yang sudah ada agar terasa seperti produk perangkat lunak astronomi yang matang: cinematic, editorial, presisi, hidup, dan mudah digunakan. Hasil sekarang masih terasa kaku dan Bulan 3D belum meyakinkan. Tingkatkan kualitas visual tanpa mengubah identitas Sabit menjadi dashboard game/sci-fi.
+
+A. AUDIT DAN ART DIRECTION
+- Audit semua file, komponen, package, aset, dan route terlebih dahulu.
+- Identifikasi sumber tekstur Bulan saat ini. Hapus tekstur yang menghasilkan pola bercabang/urat tidak alami atau crater hitam yang tampak seperti lubang tempelan.
+- Pertahankan identitas Sabit, logo, versi produk, dan fakta produk yang sudah diverifikasi.
+- Gunakan screenshot referensi kedua untuk mengambil prinsip: komposisi asimetris, focal object besar, kedalaman ruang, orbit yang halus, label informasi kecil, dan panel transparan secukupnya.
+- Jangan menyalin brand NOVA, avatar, menu, dashboard tiles, atau elemen yang tidak relevan dengan Sabit.
+- Hindari layout dua kolom yang terasa seperti blok teks kiri dan gambar kanan tanpa hubungan visual. Buat komposisi menyatu melalui layer, orbit, pencahayaan, dan metadata yang tertata.
+- Gunakan Bahasa Indonesia secara konsisten sebagai bahasa utama. Istilah teknis Inggris boleh dipakai bila lazim, tetapi jangan campur bahasa tanpa alasan.
+- Tidak boleh menggunakan emoji. Gunakan Lucide, SVG, atau teks.
+
+B. BULAN 3D — HARUS TERASA BENAR-BENAR 3D
+Buat komponen terisolasi `MoonScene` / `MoonCanvas` menggunakan Three.js atau teknologi yang sudah sesuai dengan stack.
+
+Arah visual:
+- Satu bola Bulan besar sebagai focal point hero, sekitar 42–52% lebar komposisi desktop; ukurannya adaptif pada tablet/mobile.
+- Permukaan harus memiliki lunar maria, highlands, kawah kecil-besar, dan tekstur regolith abu-abu yang natural. Jangan gunakan pola radial seperti urat, retakan pohon, atau noise abstrak.
+- Gunakan albedo/color map resmi dan elevation/height map yang sinkron. Prioritaskan data NASA SVS CGI Moon Kit (LRO color map + LOLA displacement/elevation map). Referensi: https://svs.gsfc.nasa.gov/4720/ dan https://svs.gsfc.nasa.gov/.
+- Untuk web, mulai dengan aset 2K yang ringan seperti `lroc_color_2k.jpg` dan `ldem_3_8bit.jpg`, lalu optimalkan dan kompres untuk produksi. Jangan memuat file EXR/TIFF multi-gigabyte ke website.
+- Bila memilih GLB NASA, ukur ukuran file dan jangan memakai model topo puluhan/ratusan MB tanpa optimasi. Jangan mengunduh aset dari sumber yang tidak jelas.
+- Terapkan tekstur warna pada material, gunakan height/displacement atau normal/bump untuk relief. Jangan mengandalkan satu gambar datar yang ditempel ke sphere.
+- Gunakan geometri sphere dengan segmentasi cukup untuk displacement yang halus. Relief harus subtil, bukan seperti batu tajam atau asteroid.
+- Material lunar harus matte/rough, bukan logam atau plastik glossy. Metalness mendekati 0; roughness tinggi.
+- Pencahayaan satu key light terarah dan fill yang sangat lembut. Perlihatkan terminator siang-malam yang natural, highlight kawah, dan bayangan yang memiliki falloff wajar.
+- Warna Bulan tetap netral abu-abu, sedikit warm hanya dari lighting/brand accent. Hindari neon cyan/ungu dan halo berlebihan.
+- Rotasi aksial sangat lambat: satu putaran visual sekitar 120–180 detik. Tambahkan drag-to-rotate yang halus hanya jika interaksi tidak mengganggu scroll dan aksesibilitas.
+- Tambahkan sedikit orbit arcs/coordinate marks di belakang Bulan. Gunakan garis tipis dan elegan; jangan penuh dengan partikel atau objek planet dekoratif.
+- Jangan klaim visual Bulan ini menunjukkan fase hilal aktual, kondisi langit real-time, atau simulasi astronomi ilmiah. Beri label sebagai visualisasi 3D dekoratif kecuali data dan perhitungan nyata tersedia.
+- Jangan membuat bentuk hilal sebagai sphere yang dipotong secara tidak realistis. Jika ingin memperkenalkan konsep fase, buat diagram terpisah yang diberi label ilustrasi.
+
+C. MOTION DAN INTERAKSI — BUAT LEBIH FLUID, BUKAN LEBIH RAMAI
+Gunakan satu motion language yang konsisten. Gunakan GSAP + ScrollTrigger hanya bila memang dibutuhkan; CSS transition cukup untuk interaksi sederhana.
+
+Choreography yang diminta:
+1. Initial load: header tampil halus; headline masuk bertahap dengan jarak gerak kecil; Bulan muncul dengan fade + scale settle; orbit digambar perlahan.
+2. Hero: rotasi lambat, gerak parallax sangat subtil (maksimal beberapa pixel), dan drag-to-rotate opsional. Gerak tidak boleh membuat teks sulit dibaca.
+3. Scroll: section penting muncul satu kali dengan opacity + translate kecil; jangan animasikan setiap kata atau setiap card.
+4. Screenshot aplikasi: gunakan reveal/mask atau subtle focus shift pada screenshot asli, bukan mockup palsu.
+5. Diagram astronomi: animasikan stroke/path secara line-draw hanya jika diagramnya benar dan punya fungsi penjelasan.
+6. Roadmap: garis timeline digambar mengikuti scroll secara lembut; milestone muncul berurutan; milestone aktif punya penanda visual yang jelas. Pada mobile jadikan timeline vertikal tanpa horizontal overflow.
+7. Navigation dan button: hover/focus/pressed state terasa responsif dan konsisten. Durasi interaksi sederhana sekitar 150–250 ms, section reveal sekitar 350–650 ms.
+
+Jangan gunakan scroll-jacking, pinning panjang, parallax agresif, bounce berlebihan, section yang berputar, animasi terus-menerus pada semua elemen, atau autoplay audio.
+
+D. REVISI STRUKTUR DAN HIERARKI HALAMAN
+Pertahankan konten aktual, namun susun ritme halaman agar tidak terasa sebagai tumpukan panel:
+1. Header tipis dan sticky seperlunya; logo Sabit, versi Basic, navigasi ringkas, satu CTA utama.
+2. Hero cinematic: pesan produk Bahasa Indonesia yang spesifik, CTA installer, CTA pelajari alur, Bulan 3D, orbit halus, dan metadata singkat.
+3. Ringkasan peran Sabit dan konteks penggunaan.
+4. Fitur aktual versi Basic saja; jangan menambahkan fitur yang belum selesai.
+5. Alur kerja dengan diagram editorial yang akurat.
+6. Preview aplikasi menggunakan screenshot asli dari project/user.
+7. Spesifikasi teknis dan kompatibilitas yang benar-benar terverifikasi.
+8. ROADMAP sebagai section besar terakhir sebelum footer.
+9. Footer dengan link yang benar-benar tersedia.
+
+Gunakan panel/translucent surfaces secara selektif, bukan membuat semua konten menjadi kartu rounded. Boleh memakai satu outer frame atau border halus pada hero jika hasilnya mendukung komposisi, tetapi jangan membuat dashboard palsu.
+
+E. ROADMAP — SECTION TERAKHIR SEBELUM FOOTER
+Buat section bertajuk `Arah Pengembangan Sabit` atau `Roadmap Pengembangan`.
+- Tampilkan baseline saat ini: `Sabit v1.0.0 Basic` hanya bila versi tersebut terkonfirmasi dari project/release.
+- Roadmap menunjukkan arah dan kemungkinan pengembangan, bukan jadwal rilis yang dijanjikan.
+- Jangan buat tanggal, kuartal, persentase progres, atau status “sedang dikerjakan” tanpa data dari owner.
+- Gunakan label yang jujur: `Saat ini`, `Rencana`, `Eksplorasi`, atau `Evaluasi`.
+- Contoh topik masa depan yang boleh ditawarkan sebagai ide, bukan janji: penyempurnaan workflow pengolahan citra; visualisasi dan evaluasi data pengamatan; interoperabilitas perangkat observasi; dokumentasi, pelaporan, dan ekspor hasil.
+- Jangan menyebut semua topik di atas sebagai fitur yang sudah tersedia. Jangan membuat tier Pro/Standard baru kecuali owner secara eksplisit meminta.
+- Visual timeline dapat berupa jalur orbit yang berubah menjadi garis milestone. Pakai motion ringan, stagger, dan indikator aktif. Jangan membuat carousel yang memerlukan swipe untuk membaca semua item.
+- Tambahkan catatan kecil: `Roadmap ini merupakan arah pengembangan dan dapat berubah mengikuti evaluasi penelitian serta kebutuhan pengguna.`
+
+F. LINK GITHUB DAN INSTALLER WINDOWS (.EXE)
+Dukung tiga tujuan yang terpisah:
+1. `Unduh Sabit untuk Windows` — download langsung file installer .exe.
+2. `Lihat source code` — menuju GitHub repository.
+3. `Lihat semua rilis` — menuju halaman GitHub Releases.
+
+Temukan link dan file secara nyata:
+- Baca git remote `origin` dari repository saat ini. Jika host-nya GitHub, gunakan URL tersebut sebagai repo link setelah menormalisasi suffix `.git`.
+- Jangan mengarang OWNER/REPO atau URL GitHub jika remote tidak ada atau bukan GitHub.
+- Cari installer yang sudah disiapkan owner di root workspace dan folder relevan seperti `release/`, `dist/`, `installer/`, `downloads/`. Abaikan `node_modules`, cache, dan folder build sementara.
+- Cocokkan nama file, versi, arsitektur, dan ukuran file sebelum menautkannya.
+- Jangan mengubah atau menghapus file installer sumber.
+- Jangan membuat tombol download dengan `href="#"`, URL placeholder aktif, atau tombol yang pura-pura berhasil.
+- Jika installer hendak disajikan langsung oleh website, salin (jangan pindahkan) ke `public/downloads/` sesuai nama file sebenarnya, lalu gunakan URL relatif `/downloads/NAMA-FILE-SEBENARNYA.exe`.
+- Jika installer besar atau repository publik, utamakan mengunggahnya sebagai asset GitHub Release daripada commit file .exe ke git repository.
+- Untuk asset GitHub Release yang benar-benar telah diunggah, gunakan pola URL resmi: `https://github.com/OWNER/REPO/releases/latest/download/NAMA-ASSET.exe`. Halaman release terbaru: `https://github.com/OWNER/REPO/releases/latest`.
+- Jika belum ada asset release, jangan mengasumsikan pola URL tersebut sudah aktif. Tautkan ke halaman Releases bila tersedia atau tandai konfigurasi installer sebagai TODO.
+- Buat satu konfigurasi link terpusat (sesuaikan dengan stack; jangan memaksa Vite bila bukan Vite): repository URL, releases URL, installer URL, file label/version. Semua CTA harus membaca konfigurasi yang sama.
+- Jika value belum ada, sembunyikan CTA yang tidak bisa dipakai atau tampilkan status `Link unduhan belum tersedia`; jangan meninggalkan broken link.
+- Tampilkan nama/versi installer hanya jika terverifikasi dari file/release. Jangan klaim digital signature atau bebas virus tanpa pemeriksaan.
+
+Jika project memakai Vite, `.env.example` dapat menggunakan:
+VITE_SABIT_GITHUB_REPO_URL=
+VITE_SABIT_GITHUB_RELEASES_URL=
+VITE_SABIT_WINDOWS_INSTALLER_URL=
+
+Contoh nilai setelah diverifikasi:
+VITE_SABIT_GITHUB_REPO_URL=https://github.com/MauludyZhrn/Sabit.git
+VITE_SABIT_GITHUB_RELEASES_URL=https://github.com/OWNER/REPO/releases/latest
+VITE_SABIT_WINDOWS_INSTALLER_URL=/downloads/NAMA-FILE-SEBENARNYA.exe
+
+G. IMPLEMENTASI DAN PERFORMA
+- Jangan mengubah stack project tanpa alasan. Buat komponen modular seperti `MoonScene`, `HeroSection`, `RoadmapTimeline`, `DownloadActions` bila cocok.
+- Lazy-load 3D scene; headline dan CTA harus tampil lebih awal tanpa menunggu texture/WebGL.
+- Pause animation ketika canvas offscreen atau tab browser tersembunyi.
+- Cleanup geometry, material, texture, renderer, observer, dan event listeners.
+- Cap devicePixelRatio (target awal 1.5 desktop dan lebih rendah di mobile), gunakan texture yang dikompresi/dioptimasi, kurangi detail pada perangkat kecil.
+- Sediakan poster statis yang konsisten jika WebGL gagal atau tidak didukung.
+- `prefers-reduced-motion`: hentikan rotasi/parallax/nonessential scroll animation; konten tetap tampil normal.
+- Jangan mengorbankan LCP/FCP demi canvas 3D. Hindari memuat asset berat sebelum interaksi/viewport.
+- Pastikan WebGL fallback, loading state, error boundary, dan responsive layout.
+
+H. VALIDASI SEBELUM SELESAI
+- Jalankan lint, typecheck, test, dan production build yang tersedia.
+- Preview minimal 1440px, 1024px, 768px, dan 390px.
+- Periksa ukuran Bulan, detail permukaan, terminator, kualitas pencahayaan, dan komposisi teks.
+- Periksa reduced-motion, fallback WebGL, tab hidden/offscreen pause, drag input, keyboard navigation, focus state, dan download links.
+- Pastikan tidak ada horizontal overflow, CTA mati, fake UI, emoji, atau konten roadmap yang diklaim sebagai fitur aktif.
+- Bandingkan hasil dengan screenshot saat ini: landing page harus terasa lebih hidup, dinamis, dan berlapis; jangan hanya mengganti warna atau memperbesar gambar Bulan.
+- Tuntaskan perbaikan yang terdeteksi sebelum menyatakan selesai.
+
+HASIL YANG HARUS DILAPORKAN
+1. Ringkasan masalah pada versi lama dan perbaikan yang dilakukan.
+2. Daftar file/komponen yang diubah atau ditambahkan.
+3. Sumber aset Bulan dan attribution/credit yang dipakai.
+4. URL GitHub, Releases, dan installer yang berhasil diverifikasi; sebutkan bila belum tersedia.
+5. Hasil lint/build/test serta hasil pengecekan responsive dan reduced-motion.
+6. Sisa TODO yang membutuhkan data dari owner.
+
+Mulai dengan audit project dan implementasikan revisi ini. Jangan berhenti hanya pada mockup, rencana, atau penjelasan.

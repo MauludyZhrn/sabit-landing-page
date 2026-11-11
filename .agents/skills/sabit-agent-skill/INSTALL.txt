@@ -1,0 +1,10 @@
+SABIT WEB DESIGN SKILL
+
+Install:
+1. Extract this ZIP into the root of your Sabit website project.
+2. Keep the folder structure so the result is:
+   .agents/skills/sabit-web-design/SKILL.md
+3. Open/reload the project in Antigravity.
+4. In the agent panel's Customizations/Skills area, verify that sabit-web-design is discovered.
+
+This is a project-specific companion skill. It does not replace the general frontend-design and design-slop skills.

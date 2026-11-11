@@ -1,0 +1,42 @@
+name: Validate skill library
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.14.1
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint repository scripts
+        run: npm run lint
+
+      - name: Validate canonical skills and wrapper sync
+        run: npm run validate
+
+      - name: Ensure generated wrappers are up to date
+        run: |
+          npm run generate:wrappers
+          npm run check:wrapper-drift
+
+      - name: Smoke test local skills discovery
+        run: npm run smoke:list
+
+      - name: Smoke test local skill install
+        run: npm run smoke:install

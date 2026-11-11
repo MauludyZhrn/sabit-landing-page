@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sabit — Presisi Terotomasi untuk Observasi Hilal</title>
+  <meta name="description" content="Aplikasi desktop native berbasis C++20 dan Qt 6 untuk observasi hilal, kalkulasi ephemeris astronomi, akusisi kamera astrofotografi, dan evaluasi kriteria MABIMS.">
+  <link rel="icon" type="image/x-icon" href="/assets/logo/sabit-icon.ico">
+  <link rel="stylesheet" href="/src/styles.css">
+</head>
+<body>
+  <!-- =======================================================================
+       SITE HEADER
+       ======================================================================= -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#" class="brand-lockup" aria-label="Sabit Beranda">
+        <img src="/assets/logo/lockup-horizontal-dark.svg" alt="Sabit Logo" class="brand-logo-img" width="135" height="47">
+        <span class="brand-version-badge">v1.0.0 Basic</span>
+      </a>
+
+      <nav class="site-nav" aria-label="Navigasi Utama">
+        <ul class="nav-links">
+          <li><a href="#geometri" class="nav-link">Geometri Hilal</a></li>
+          <li><a href="#evidence" class="nav-link">Antarmuka</a></li>
+          <li><a href="#workflow" class="nav-link">Alur Kerja</a></li>
+          <li><a href="#roadmap" class="nav-link">Roadmap</a></li>
+          <li><a href="#teknis" class="nav-link">Spesifikasi</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <!-- WCAG 2.2.2 Motion Pause/Play Control -->
+        <button id="motion-toggle-btn" class="motion-toggle-btn" type="button" aria-label="Jeda animasi rotasi 3D dan diagram">
+          <svg class="icon-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>
+          <svg class="icon-play hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span id="motion-status-text">Jeda Animasi</span>
+        </button>
+
+        <a href="/downloads/Sabit-Setup-v1.0.0-x64.exe" data-action="download-installer" class="btn-primary">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Unduh Sabit</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <!-- =======================================================================
+         HERO SECTION WITH PHOTOREALISTIC 3D MOON & CELESTIAL ORBITAL CANVAS
+         ======================================================================= -->
+    <section class="hero-section" aria-labelledby="hero-title">
+      <!-- Background Keplerian Orbital Mechanics & Starfield Canvas -->
+      <canvas id="orbital-hero-canvas" class="orbital-hero-canvas" aria-hidden="true"></canvas>
+      <div class="hero-celestial-grid" aria-hidden="true"></div>
+
+      <div class="container hero-grid">
+        <div class="hero-content">
+          <div class="hero-eyebrow mono-tag">
+            <span>SABIT v1.0.0 BASIC</span>
+            <span class="eyebrow-divider" aria-hidden="true"></span>
+            <span>OBSERVASI HILAL &amp; CITRA ASTRONOMI</span>
+          </div>
+
+          <h1 id="hero-title" class="hero-title">Presisi Terotomasi untuk Observasi Hilal</h1>
+
+          <p class="hero-lead">
+            Perangkat lunak desktop native berbasis C++20 dan Qt 6 untuk otomasi kalkulasi ephemeris toposentris, akusisi kamera astrofotografi berkontras tinggi, dan evaluasi visibilitas hilal berdasarkan kriteria objektif MABIMS.
+          </p>
+
+          <div class="hero-actions">
+            <!-- 1. Direct Installer Download -->
+            <a href="/downloads/Sabit-Setup-v1.0.0-x64.exe" data-action="download-installer" class="btn-primary">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Unduh Installer Windows (.exe)</span>
+            </a>
+
+            <!-- 2. GitHub Source Code Repository -->
+            <a href="https://github.com/MauludyZhrn/Sabit" data-action="github-repo" class="btn-secondary-dark">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+              </svg>
+              <span>Lihat Source Code</span>
+            </a>
+
+            <!-- 3. Workflow Anchor Link -->
+            <a href="#workflow" class="btn-secondary-dark">
+              <span>Pelajari Alur Kerja</span>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </a>
+          </div>
+
+          <!-- Verified Floating Telemetry Badges Capsule -->
+          <div class="hero-badges-capsule" role="list" aria-label="Kapabilitas Terverifikasi Sabit Basic">
+            <div class="badge-item" role="listitem">
+              <span class="badge-dot" aria-hidden="true"></span>
+              <span>Kriteria MABIMS Real-Time</span>
+            </div>
+            <div class="badge-item" role="listitem">
+              <span class="badge-dot" aria-hidden="true"></span>
+              <span>Format Astronomi .FITS</span>
+            </div>
+            <div class="badge-item" role="listitem">
+              <span class="badge-dot" aria-hidden="true"></span>
+              <span>Driver ZWO ASI &amp; QHYCCD</span>
+            </div>
+            <div class="badge-item" role="listitem">
+              <span class="badge-dot" aria-hidden="true"></span>
+              <span>Sensor Inferensi AI ONNX</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3D Moon Centerpiece Stage (NASA CGI Moon Kit) -->
+        <div class="hero-visual-stage" aria-label="Visual Interaktif 3D Bulan Sabit">
+          <div class="moon-viewport">
+            <!-- Delicate Elliptical Orbit & Celestial Vector Arcs -->
+            <svg class="moon-orbit-svg" viewBox="0 0 600 600" aria-hidden="true">
+              <line x1="300" y1="30" x2="300" y2="570" class="orbit-axis"></line>
+              <line x1="30" y1="300" x2="570" y2="300" class="orbit-axis"></line>
+              <circle cx="300" cy="300" r="260" class="orbit-meridian"></circle>
+              <ellipse cx="300" cy="300" rx="275" ry="175" transform="rotate(-22 300 300)" class="orbit-ellipse"></ellipse>
+              <circle cx="505" cy="215" r="3.5" class="orbit-node-dot"></circle>
+              <circle cx="95" cy="385" r="3.5" class="orbit-node-dot"></circle>
+            </svg>
+
+            <!-- Floating Telemetry Capsule on Moon -->
+            <div class="moon-telemetry-pill" aria-hidden="true">
+              <span class="status-indicator-green"></span>
+              <span>TARGET: HILAL • MABIMS EVAL</span>
+            </div>
+
+            <!-- Three.js Canvas Mount Point (Lazy-loaded) -->
+            <div id="moon-canvas-container" class="moon-canvas-container" title="Bulan 3D — Seret perlahan untuk memutar orientasi selenografis"></div>
+
+            <!-- Instant Static Fallback Poster (Baked from official NASA LRO texture) -->
+            <img id="moon-fallback-poster"
+                 class="moon-fallback-poster"
+                 src="/assets/lunar-poster.png"
+                 alt="Visual 3D Bulan dengan tekstur resmi NASA LRO, relief kawah LOLA, dan batas siang-malam alami"
+                 width="540"
+                 height="540"
+                 loading="eager"
+                 decoding="async">
+
+            <div class="moon-caption-tag" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 2a14.5 14.5 0 0 0 0 20 10 10 0 0 0 0-20"></path>
+              </svg>
+              <span>Model Selenografis 3D • Data Topografi NASA LRO/LOLA</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         GEOMETRY & MABIMS CRITERIA (WITH LINE-DRAW ANIMATION VIA MOTION)
+         ======================================================================= -->
+    <section id="geometri" class="geometry-section section-padding reveal-group" aria-labelledby="geometri-title">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-eyebrow mono-tag">DASAR ASTRONOMI &amp; HISAB RUKYAT</div>
+          <h2 id="geometri-title" class="section-title">Geometri Pengamatan &amp; Kriteria MABIMS</h2>
+          <p class="section-desc">
+            Pengamatan hilal saat matahari terbenam menghadapi tantangan kontras cahaya senja yang sangat tipis. Sabit menghitung koordinat toposentris bulan secara real-time terhadap ufuk pengamat.
+          </p>
+        </div>
+
+        <div class="geometry-grid">
+          <!-- Animated Line-Draw Celestial Coordinate Diagram -->
+          <div id="ephemeris-diagram-container" class="diagram-card" aria-label="Diagram Geometri Ephemeris Hilal dan Kriteria MABIMS">
+            <div class="diagram-header">
+              <span class="diagram-title">SIMULASI GEOMETRI UFUK BARAT</span>
+              <span class="diagram-status-badge">Kriteria MABIMS Terpenuhi</span>
+            </div>
+
+            <svg class="ephemeris-svg" viewBox="0 0 600 360" role="img" aria-label="Diagram garis astronomi: Garis ufuk, matahari terbenam, busur tinggi hilal, dan sudut elongasi">
+              <line x1="40" y1="280" x2="560" y2="280" stroke="#223246" stroke-width="1"></line>
+              <line x1="40" y1="200" x2="560" y2="200" stroke="#1A2636" stroke-dasharray="3 3"></line>
+              <line x1="40" y1="120" x2="560" y2="120" stroke="#1A2636" stroke-dasharray="3 3"></line>
+
+              <!-- Line 1: Celestial Horizon (Ufuk Hakiki / Mar'i) -->
+              <path class="draw-path" d="M 40 280 L 560 280" stroke="#647484" stroke-width="2"></path>
+              <line x1="120" y1="275" x2="120" y2="285" stroke="#647484" stroke-width="1"></line>
+              <line x1="240" y1="275" x2="240" y2="285" stroke="#647484" stroke-width="1"></line>
+              <line x1="360" y1="275" x2="360" y2="285" stroke="#647484" stroke-width="1"></line>
+              <line x1="480" y1="275" x2="480" y2="285" stroke="#647484" stroke-width="1"></line>
+
+              <!-- Line 2: Sun Sunset Zenith Path -->
+              <path class="draw-path" d="M 180 280 L 180 320" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="4 4"></path>
+
+              <!-- Sun Position (Ghurub di ufuk, Alt: 0°) -->
+              <g class="diag-node">
+                <circle cx="180" cy="280" r="10" fill="#F59E0B" opacity="0.85"></circle>
+                <circle cx="180" cy="280" r="18" fill="none" stroke="#F59E0B" stroke-width="1" opacity="0.3"></circle>
+              </g>
+
+              <!-- Line 3: Moon Position Path & Altitude Arc (Tinggi Bulan >= 3°) -->
+              <path class="draw-path" d="M 380 280 L 380 140" stroke="#A9824A" stroke-width="1.5" stroke-dasharray="4 4"></path>
+
+              <!-- Line 4: Great-Circle Elongation Arc (Elongasi >= 6.4°) -->
+              <path class="draw-path" d="M 180 280 Q 270 190 380 140" stroke="#C49B5B" stroke-width="2.5"></path>
+
+              <!-- Crescent Moon Node -->
+              <g class="diag-node">
+                <circle cx="380" cy="140" r="12" fill="#E2E8F0"></circle>
+                <circle cx="384" cy="138" r="10" fill="#0F1823"></circle>
+              </g>
+
+              <!-- MABIMS Minimum Threshold Box Guide (Tinggi 3°, Elongasi 6.4°) -->
+              <path class="draw-path" d="M 340 220 L 440 220" stroke="#4ADE80" stroke-width="1.5" stroke-dasharray="2 3"></path>
+
+              <!-- Measurement Labels -->
+              <text x="50" y="272" fill="#8E9BA6" font-family="var(--font-mono)" font-size="11" class="diag-label">UFUK PENGAMAT (0° ALT)</text>
+              <text x="140" y="315" fill="#F59E0B" font-family="var(--font-mono)" font-size="11" class="diag-label">Matahari (Ghurub)</text>
+
+              <text x="395" y="135" fill="#E2E8F0" font-family="var(--font-mono)" font-size="12" font-weight="600" class="diag-label">Posisi Hilal</text>
+              <text x="395" y="152" fill="#9EACB8" font-family="var(--font-mono)" font-size="10" class="diag-label">Alt: +4° 48' 20" | Az: 239.7°</text>
+
+              <text x="250" y="195" fill="#C49B5B" font-family="var(--font-mono)" font-size="11" font-weight="600" class="diag-label">Elongasi: 8.24° (&ge; 6.4°)</text>
+              <text x="390" y="215" fill="#4ADE80" font-family="var(--font-mono)" font-size="10" class="diag-label">Batas MABIMS 3°</text>
+              <text x="320" y="250" fill="#A9824A" font-family="var(--font-mono)" font-size="11" class="diag-label">Tinggi Hilal</text>
+            </svg>
+          </div>
+
+          <!-- Criteria Explanation Cards -->
+          <div class="criteria-list">
+            <article class="criteria-item">
+              <div class="criteria-param">PARAMETER 01 • TINGGI HILAL MINIMUM</div>
+              <h3 class="criteria-title">Tinggi Hilal Hakiki &ge; 3.0°</h3>
+              <p class="criteria-text">
+                Ketinggian busur toposentris pusat piringan bulan di atas ufuk hakiki saat waktu matahari terbenam setempat, memperhitungkan refraksi atmosfer dan semidiameter matahari.
+              </p>
+            </article>
+
+            <article class="criteria-item">
+              <div class="criteria-param">PARAMETER 02 • SUDUT ELONGASI MINIMUM</div>
+              <h3 class="criteria-title">Sudut Elongasi Busur &ge; 6.4°</h3>
+              <p class="criteria-text">
+                Jarak sudut geosentris antara pusat piringan matahari dan pusat piringan bulan. Syarat minimum 6.4° diperlukan agar ketebalan sabit bulan cukup memantulkan kontras cahaya yang menembus hamburan Rayleigh senja.
+              </p>
+            </article>
+
+            <article class="criteria-item">
+              <div class="criteria-param">PARAMETER 03 • TELEMETRI &amp; WAKTU DUAL</div>
+              <h3 class="criteria-title">Sinkronisasi Kalender Hijriah &amp; UTC</h3>
+              <p class="criteria-text">
+                Perhitungan otomatis umur bulan (Moon Age) sejak waktu konjungsi (ijtima') dan persentase iluminasi permukaan, dievaluasi langsung terhadap kriteria visibilitas astronomis MABIMS.
+              </p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         EVIDENCE — AUTHENTIC APPLICATION PREVIEW (halaman-utama.png)
+         ======================================================================= -->
+    <section id="evidence" class="evidence-section section-padding reveal-group" aria-labelledby="evidence-title">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-eyebrow mono-tag">BUKTI PRODUK OTENTIK</div>
+          <h2 id="evidence-title" class="section-title">Antarmuka Aplikasi Sabit Desktop</h2>
+          <p class="section-desc">
+            Tangkapan layar aktual dari build Sabit v1.0.0 (Basic) yang berjalan pada sistem operasi desktop. Klik titik sorot bernomor untuk melihat fungsi setiap subsistem.
+          </p>
+        </div>
+
+        <div class="screenshot-stage">
+          <div class="screenshot-window-bar">
+            <div class="window-dots" aria-hidden="true">
+              <span class="window-dot"></span>
+              <span class="window-dot"></span>
+              <span class="window-dot"></span>
+            </div>
+            <span>Sabit — Automated Precision for Lunar Sighting (v1.0.0)</span>
+            <span>Qt 6.x GUI</span>
+          </div>
+
+          <div class="screenshot-img-wrapper">
+            <img src="/assets/halaman-utama.png"
+                 alt="Antarmuka aplikasi desktop Sabit v1.0.0 menampilkan panel Live Histogram, Ephemeris Astronomi, dan Kontrol Kamera"
+                 class="screenshot-img"
+                 width="1280"
+                 height="750"
+                 loading="lazy">
+
+            <button type="button" class="ui-hotspot hotspot-histogram active" data-target="card-histogram" aria-label="Sorot Subsistem Live Histogram" aria-expanded="true">1</button>
+            <button type="button" class="ui-hotspot hotspot-ephemeris" data-target="card-ephemeris" aria-label="Sorot Subsistem Astronomi dan Ephemeris" aria-expanded="false">2</button>
+            <button type="button" class="ui-hotspot hotspot-camera" data-target="card-camera" aria-label="Sorot Subsistem Kamera dan Eksposur" aria-expanded="false">3</button>
+            <button type="button" class="ui-hotspot hotspot-toolbar" data-target="card-toolbar" aria-label="Sorot Toolbar Kontrol dan Format FITS" aria-expanded="false">4</button>
+            <button type="button" class="ui-hotspot hotspot-telemetry" data-target="card-telemetry" aria-label="Sorot Baris Status Telemetri" aria-expanded="false">5</button>
+          </div>
+        </div>
+
+        <div class="inspector-cards-grid" role="region" aria-label="Penjelasan Komponen Antarmuka Sabit">
+          <article id="card-histogram" class="inspector-card active" tabindex="0">
+            <span class="card-num">1</span>
+            <h3>Live Histogram &amp; Kurva Kontras</h3>
+            <p>
+              Menampilkan kurva intensitas piksel real-time dengan ambang batas (threshold) interaktif, tombol kunci kontras, dan penyesuaian gamma untuk memisahkan sabit bulan dari latar senja.
+            </p>
+          </article>
+
+          <article id="card-ephemeris" class="inspector-card" tabindex="0">
+            <span class="card-num">2</span>
+            <h3>Astronomy &amp; Ephemeris Box</h3>
+            <p>
+              Telemetri koordinat Alt/Az Bulan dan Matahari, nilai Elongasi (14.09°), Umur Bulan (29j 56m 36d), Iluminasi (1.51%), serta kalkulasi otomatis status MABIMS berdasarkan lokasi pengamat.
+            </p>
+          </article>
+
+          <article id="card-camera" class="inspector-card" tabindex="0">
+            <span class="card-num">3</span>
+            <h3>Camera &amp; Exposure Engine</h3>
+            <p>
+              Manajemen driver kamera astrofotografi (ZWO ASI / QHYCCD), pengaturan waktu eksposur presisi milidetik (100.00 ms slider), toggle Long Exposure (LX Mode), dan profil preset.
+            </p>
+          </article>
+
+          <article id="card-toolbar" class="inspector-card" tabindex="0">
+            <span class="card-num">4</span>
+            <h3>Toolbar Akusisi &amp; Format .FITS</h3>
+            <p>
+              Perekaman frame burst (limit 100 frame), snapshot tunggal, retikel bidik, grid panduan, dan dukungan format standar astronomi internasional Flexible Image Transport System (.fits).
+            </p>
+          </article>
+
+          <article id="card-telemetry" class="inspector-card" tabindex="0">
+            <span class="card-num">5</span>
+            <h3>Status Bar &amp; Sensor AI</h3>
+            <p>
+              Pemantauan performa real-time: indikator FPS, dropped frames, koordinat GPS (6.99°S 110.42°E), stempel waktu UTC, penggunaan RAM/Disk, dan status inferensi sensor AI ONNX.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         WORKFLOW — ALUR KERJA SABIT BASIC
+         ======================================================================= -->
+    <section id="workflow" class="workflow-section section-padding reveal-group" aria-labelledby="workflow-title">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-eyebrow mono-tag">METODOLOGI OBSERVASI</div>
+          <h2 id="workflow-title" class="section-title">Alur Kerja Pengamatan Sabit Basic</h2>
+          <p class="section-desc">
+            Urutan operasional terstruktur dari persiapan instrumen hingga analisis citra hilal yang terverifikasi pada rilis Basic.
+          </p>
+        </div>
+
+        <div class="workflow-timeline">
+          <article class="workflow-step">
+            <div class="step-num">TAHAP 01</div>
+            <h3 class="step-title">Kalibrasi Lokasi &amp; Ephemeris</h3>
+            <p class="step-desc">
+              Input koordinat geografis lintang, bujur, dan elevasi lokasi observasi. Sabit menyinkronkan jam sistem dengan waktu UTC untuk menghitung posisi toposentris bulan dan matahari secara instan.
+            </p>
+          </article>
+
+          <article class="workflow-step">
+            <div class="step-num">TAHAP 02</div>
+            <h3 class="step-title">Koneksi &amp; Konfigurasi Sensor</h3>
+            <p class="step-desc">
+              Menghubungkan kamera sensor CMOS/CCD astronomi melalui antarmuka USB 3.0. Mengatur parameter eksposur, penguatan (gain), dan mengaktifkan retikel bidik untuk penyelarasan teleskop.
+            </p>
+          </article>
+
+          <article class="workflow-step">
+            <div class="step-num">TAHAP 03</div>
+            <h3 class="step-title">Akusisi Citra &amp; Histogram</h3>
+            <p class="step-desc">
+              Melakukan penangkapan batch frame berseri dalam format .FITS atau perekaman stream. Memantau kurva live histogram untuk optimasi rentang dinamis citra di tengah cahaya langit senja.
+            </p>
+          </article>
+
+          <article class="workflow-step">
+            <div class="step-num">TAHAP 04</div>
+            <h3 class="step-title">Evaluasi Visibilitas MABIMS</h3>
+            <p class="step-desc">
+              Sabit mencocokkan data tinggi dan elongasi dengan kriteria MABIMS, menjalankan inferensi deteksi tepi sabit via ONNX, dan menyajikan laporan kelayakan rukyat yang terdokumentasi.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         ROADMAP SECTION — ARAH PENGEMBANGAN SABIT (LAST SECTION BEFORE FOOTER)
+         ======================================================================= -->
+    <section id="roadmap" class="roadmap-section section-padding reveal-group" aria-labelledby="roadmap-title">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-eyebrow mono-tag">PETA JALAN PENELITIAN &amp; FITUR</div>
+          <h2 id="roadmap-title" class="section-title" style="color: var(--text-hero-primary);">Arah Pengembangan Sabit</h2>
+          <p class="section-desc" style="color: var(--text-hero-secondary);">
+            Rencana eksplorasi kapabilitas observasi hilal dan pengolahan citra falak. Roadmap ini merupakan arah pengembangan dan dapat berubah mengikuti evaluasi penelitian serta kebutuhan pengguna.
+          </p>
+        </div>
+
+        <div class="roadmap-timeline-box">
+          <!-- Baseline Card: Sabit v1.0.0 Basic (Current Verified State) -->
+          <div class="roadmap-baseline-card">
+            <div class="baseline-header">
+              <div>
+                <span class="mono-tag" style="color: var(--accent-brass);">RILIS SAAT INI</span>
+                <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-hero-primary); margin-top: 4px;">Sabit v1.0.0 (Basic Edition)</h3>
+              </div>
+              <span class="badge-status-current">Saat Ini (Aktif)</span>
+            </div>
+            <p style="font-size: 0.90rem; color: var(--text-hero-secondary); line-height: 1.6; margin-bottom: 12px;">
+              Fondasi stabil untuk observasi hilal lapangan dengan kalkulasi ephemeris toposentris real-time, akusisi kamera astrofotografi ZWO/QHY, format standar .FITS, dan evaluasi kepatuhan kriteria MABIMS.
+            </p>
+            <div style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-hero-muted);">
+              Arsitektur: Native C++20 • Qt 6.x Widgets • ONNX Runtime Inference
+            </div>
+          </div>
+
+          <!-- Roadmap Grid: Potential Exploration Areas -->
+          <div class="roadmap-grid">
+            <!-- 1. Alur Pemrosesan Citra -->
+            <article class="roadmap-item-card">
+              <div>
+                <div class="roadmap-card-header">
+                  <span class="mono-tag" style="color: var(--accent-brass);">AREA 01</span>
+                  <span class="badge-status-explore">Eksplorasi</span>
+                </div>
+                <h4 class="roadmap-item-title">Alur Pemrosesan Citra Tingkat Lanjut</h4>
+                <p class="roadmap-item-desc">
+                  Eksplorasi penyempurnaan tahap pengolahan kontras untuk mengatasi hamburan cahaya senja dan turbulensi atmosfer.
+                </p>
+              </div>
+              <ul class="roadmap-points">
+                <li>Lucky imaging frame-stacking selektif</li>
+                <li>Twilight gradient subtraction otomatis</li>
+                <li>Wavelet sharpening adaptif untuk tepi sabit</li>
+              </ul>
+            </article>
+
+            <!-- 2. Visualisasi Pengamatan -->
+            <article class="roadmap-item-card">
+              <div>
+                <div class="roadmap-card-header">
+                  <span class="mono-tag" style="color: var(--accent-brass);">AREA 02</span>
+                  <span class="badge-status-explore">Eksplorasi</span>
+                </div>
+                <h4 class="roadmap-item-title">Visualisasi &amp; Analisis Pengamatan</h4>
+                <p class="roadmap-item-desc">
+                  Penyajian data visual 2D/3D untuk pembuktian ilmiah visibilitas hilal yang lebih transparan dan mudah diuji.
+                </p>
+              </div>
+              <ul class="roadmap-points">
+                <li>Plot profil intensitas piksel 3D (Surface Plot)</li>
+                <li>Grafik rasio kontras objek terhadap langit (q-value)</li>
+                <li>Simulasi posisi hilal terhadap proyeksi ufuk lokal</li>
+              </ul>
+            </article>
+
+            <!-- 3. Interoperabilitas Perangkat -->
+            <article class="roadmap-item-card">
+              <div>
+                <div class="roadmap-card-header">
+                  <span class="mono-tag" style="color: var(--accent-brass);">AREA 03</span>
+                  <span class="badge-status-eval">Evaluasi</span>
+                </div>
+                <h4 class="roadmap-item-title">Interoperabilitas Perangkat Observasi</h4>
+                <p class="roadmap-item-desc">
+                  Evaluasi integrasi protokol mounting teleskop dan sensor tambahan guna mendukung otomasi penuh observatorium.
+                </p>
+              </div>
+              <ul class="roadmap-points">
+                <li>Protokol kontrol mounting teleskop (ASCOM / INDI)</li>
+                <li>Sinkronisasi GPS receiver serial eksternal</li>
+                <li>Sensor cuaca dan pemantauan kualitas langit</li>
+              </ul>
+            </article>
+
+            <!-- 4. Dokumentasi & Pelaporan -->
+            <article class="roadmap-item-card">
+              <div>
+                <div class="roadmap-card-header">
+                  <span class="mono-tag" style="color: var(--accent-brass);">AREA 04</span>
+                  <span class="badge-status-plan">Rencana</span>
+                </div>
+                <h4 class="roadmap-item-title">Dokumentasi &amp; Pelaporan Resmi</h4>
+                <p class="roadmap-item-desc">
+                  Standarisasi berkas laporan hasil rukyat untuk keperluan validasi data sidang isbat dan arsip observatorium.
+                </p>
+              </div>
+              <ul class="roadmap-points">
+                <li>Ekspor berkas laporan sidang isbat otomatis (PDF)</li>
+                <li>Metadata FITS lengkap dengan koordinat toposentris</li>
+                <li>Verifikasi integritas citra via digital checksum</li>
+              </ul>
+            </article>
+          </div>
+
+          <div class="roadmap-disclaimer">
+            Catatan: Roadmap ini merupakan arah pengembangan penelitian dan dapat berubah mengikuti evaluasi observasi lapangan serta kebutuhan sidang isbat.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         TECHNICAL FOUNDATION & DOWNLOAD SPECIFICATION
+         ======================================================================= -->
+    <section id="teknis" class="tech-section section-padding reveal-group" aria-labelledby="tech-title">
+      <div class="container">
+        <div class="tech-grid">
+          <div>
+            <div class="section-eyebrow mono-tag">ARSITEKTUR &amp; PERFORMA</div>
+            <h2 id="tech-title" class="section-title" style="color: var(--text-hero-primary);">Fondasi Rekayasa Perangkat Lunak</h2>
+            <p class="section-desc" style="color: var(--text-hero-secondary);">
+              Sabit dibangun dengan arsitektur native C++20 untuk memastikan pemrosesan frame video berkecepatan tinggi tanpa latensi runtime interpreter.
+            </p>
+
+            <div class="tech-feature-list">
+              <div class="tech-item">
+                <div class="tech-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="16 18 22 12 16 6"></polyline>
+                    <polyline points="8 6 2 12 8 18"></polyline>
+                  </svg>
+                </div>
+                <div>
+                  <h4>Core C++20 &amp; Qt 6 Widgets</h4>
+                  <p>Implementasi native C++20 berkinerja tinggi dengan antarmuka grafis Qt 6 untuk stabilitas jangka panjang dan konsumsi memori yang efisien.</p>
+                </div>
+              </div>
+
+              <div class="tech-item">
+                <div class="tech-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                    <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                    <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                    <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                  </svg>
+                </div>
+                <div>
+                  <h4>Integrasi SDK Astrofotografi Native</h4>
+                  <p>Dukungan perangkat keras langsung melalui ASICamera2.dll (ZWO) dan qhyccd.dll untuk kontrol sensor, pendingin (cooling), dan frame rate tinggi.</p>
+                </div>
+              </div>
+
+              <div class="tech-item">
+                <div class="tech-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                </div>
+                <div>
+                  <h4>Inferensi Model ONNX Runtime</h4>
+                  <p>Mengintegrasikan runtime inferensi machine learning mandiri (onnxruntime.dll) untuk verifikasi probabilitas sabit tanpa koneksi internet.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Download Specification Box -->
+          <div id="download" class="download-box">
+            <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-hero-primary);">Paket Rilis Sabit Basic</h3>
+            <p style="font-size: 0.88rem; color: var(--text-hero-secondary); margin-top: 4px;">
+              Installer resmi untuk sistem operasi Windows 64-bit sebagai rilis tesis dan penelitian observasi falak.
+            </p>
+
+            <table class="download-spec-table">
+              <tbody>
+                <tr>
+                  <td class="spec-key">VERSI PRODUK</td>
+                  <td class="spec-val">Sabit v1.0.0 (Basic Edition)</td>
+                </tr>
+                <tr>
+                  <td class="spec-key">ARSITEKTUR OS</td>
+                  <td class="spec-val" data-value="installer-arch">Windows 10 / 11 (64-bit)</td>
+                </tr>
+                <tr>
+                  <td class="spec-key">NAMA FILE</td>
+                  <td class="spec-val" data-value="installer-filename">Sabit-Setup-v1.0.0-x64.exe</td>
+                </tr>
+                <tr>
+                  <td class="spec-key">UKURAN FILE</td>
+                  <td class="spec-val" data-value="installer-size">31.2 MB</td>
+                </tr>
+                <tr>
+                  <td class="spec-key">TOOLKIT &amp; COMPILER</td>
+                  <td class="spec-val">Qt 6.x • MinGW / GCC C++20</td>
+                </tr>
+                <tr>
+                  <td class="spec-key">FORMAT CITRA</td>
+                  <td class="spec-val">FITS Astronomy (.fits), Raw Frame</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="download-actions-stack">
+              <!-- Direct Download Link -->
+              <a href="/downloads/Sabit-Setup-v1.0.0-x64.exe" data-action="download-installer" class="btn-primary" style="width: 100%;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Unduh Installer Sabit v1.0.0 (.exe)</span>
+              </a>
+
+              <div class="link-secondary-row">
+                <!-- GitHub Releases -->
+                <a href="https://github.com/MauludyZhrn/Sabit/releases" data-action="github-releases" class="btn-secondary-dark" style="flex: 1;">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                  </svg>
+                  <span>Semua Rilis GitHub</span>
+                </a>
+
+                <!-- GitHub Source -->
+                <a href="https://github.com/MauludyZhrn/Sabit" data-action="github-repo" class="btn-secondary-dark" style="flex: 1;">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                  </svg>
+                  <span>Source Code</span>
+                </a>
+              </div>
+            </div>
+
+            <p style="font-size: 0.74rem; color: var(--text-hero-muted); text-align: center; margin-top: 14px; font-family: var(--font-mono);">
+              Bebas dari pelacak komersial • Rilis terverifikasi untuk penelitian astronomi
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- =======================================================================
+       SITE FOOTER
+       ======================================================================= -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div style="max-width: 400px;">
+          <img src="/assets/logo/lockup-horizontal-dark.svg" alt="Sabit Logo" class="brand-logo-img" width="120" height="42" style="margin-bottom: 12px;">
+          <p style="color: var(--text-hero-muted); font-size: 0.84rem; line-height: 1.6;">
+            Sabit merupakan perangkat lunak analisis citra dan observasi astronomis hilal berbasis C++20 dan Qt 6 yang dikembangkan untuk tujuan penelitian ilmiah dan pembuktian hisab rukyat objektif.
+          </p>
+          <p style="color: var(--text-hero-muted); font-size: 0.76rem; font-family: var(--font-mono); margin-top: 10px;">
+            Atribusi visual: <span data-value="lunar-credit">NASA/GSFC/Arizona State University — LRO/LOLA (CGI Moon Kit)</span>
+          </p>
+        </div>
+
+        <div class="footer-col">
+          <h5>Navigasi Halaman</h5>
+          <ul class="footer-links">
+            <li><a href="#geometri">Geometri MABIMS</a></li>
+            <li><a href="#evidence">Antarmuka Desktop</a></li>
+            <li><a href="#workflow">Alur Kerja Pengamatan</a></li>
+            <li><a href="#roadmap">Roadmap Riset</a></li>
+            <li><a href="#teknis">Spesifikasi &amp; Unduh</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Tautan Proyek</h5>
+          <ul class="footer-links">
+            <li><a href="/downloads/Sabit-Setup-v1.0.0-x64.exe" data-action="download-installer">Unduh Installer (.exe)</a></li>
+            <li><a href="https://github.com/MauludyZhrn/Sabit" data-action="github-repo">GitHub Repository</a></li>
+            <li><a href="https://github.com/MauludyZhrn/Sabit/releases" data-action="github-releases">Riwayat Rilis (Releases)</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Kompatibilitas Sensor</h5>
+          <ul class="footer-links">
+            <li><span>ZWO ASI CMOS Cameras</span></li>
+            <li><span>QHYCCD Planetary Sensors</span></li>
+            <li><span>DirectShow &amp; UVC Webcams</span></li>
+            <li><span>Standar Citra Astronomi .FITS</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>&copy; 2026 Sabit — Automated Precision for Lunar Sighting. Semua hak dilindungi.</div>
+        <div>Rilis Tesis: Sabit Basic v1.0.0 • MinGW64 Qt 6 • C++20</div>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

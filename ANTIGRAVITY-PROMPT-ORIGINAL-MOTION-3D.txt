@@ -1,0 +1,23 @@
+Tambahkan motion design yang terarah dan sebuah visual Bulan 3D nyata pada hero landing page Sabit.
+
+Wajib:
+- Baca skill sabit-web-design dan MOTION-3D-BRIEF.md terlebih dahulu.
+- Buat Bulan sebagai sphere 3D dengan detail kawah, tekstur permukaan, relief normal/bump, pencahayaan terarah, dan batas siang-malam (terminator) yang terlihat natural.
+- Bulan berotasi sangat lambat, sekitar satu putaran visual setiap 90–180 detik. Boleh ditambah drag-to-rotate yang halus di desktop.
+- Komposisikan Bulan di hero dengan ruang kosong cukup untuk headline dan CTA. Jangan sampai visual menutupi pesan utama.
+- Tambahkan animasi entrance singkat, scroll reveal seperlunya, serta line-draw pada diagram astronomi yang benar-benar digunakan.
+- Gunakan Three.js. Jika proyek sudah menggunakan React, pertimbangkan React Three Fiber hanya bila sesuai arsitektur. Jangan migrasi framework hanya untuk 3D.
+- Pertahankan stack dan struktur project yang sudah ada.
+- Lazy-load canvas; headline dan CTA harus tampil lebih dahulu. Pause render saat canvas tidak terlihat atau tab tidak aktif. Bersihkan geometry, material, texture, dan event listener saat komponen dilepas.
+- Sediakan fallback poster statis jika WebGL tidak tersedia, perangkat low-power, atau prefers-reduced-motion aktif.
+- Hormati prefers-reduced-motion: matikan rotasi, parallax, dan scroll choreography nonesensial.
+- Optimalkan kualitas tekstur, geometry, dan pixel ratio untuk mobile.
+
+Larangan:
+- Tidak boleh emoji.
+- Tidak boleh membuat Bulan sekadar lingkaran CSS, ikon, atau ilustrasi 2D.
+- Tidak boleh memakai glow neon, efek sci-fi berlebihan, starfield padat, scroll-jacking, atau animasi yang terus bergerak di semua section.
+- Jangan klaim Bulan 3D sebagai fase Bulan real-time atau simulasi ilmiah. Ini visual dekoratif kecuali data dan perhitungannya benar-benar diimplementasikan.
+- Jangan mengarang fitur, screenshot, data, atau hasil pemrosesan aplikasi Sabit.
+
+Sebelum implementasi, jelaskan rencana visual dan komponen yang akan dibuat. Setelah implementasi, jalankan build/lint, cek desktop/tablet/mobile, reduced-motion, fallback WebGL, dan performa. Perbaiki temuan QA sebelum selesai.

@@ -1,0 +1,90 @@
+# Contributing to better-web-ui
+
+Thanks for improving `better-web-ui`.
+
+This repository is an opinionated Agent Skills library, not a generic starter. Contributions should preserve that identity: distinctive frontend design guidance, thin compatibility wrappers, and canonical skill content under `skills/`.
+
+## Before you start
+
+Use this reading order so you do not have to reconstruct the repo from four overlapping documents at once:
+
+1. [`README.md`](README.md) — project purpose, public discoverability, stack defaults, and the shared doctrine index
+2. [`AGENTS.md`](AGENTS.md) — repository-specific agent rules, wrapper contracts, and canonical editing rules
+3. [`DEVELOPMENT.md`](DEVELOPMENT.md) — local setup, maintainer workflow, validation coverage, and the maintainer doctrine map
+4. use Node `24.14.1` via `.nvmrc` or `.node-version`
+
+## Contribution principles
+
+- edit canonical skills in `skills/`, never wrapper trees
+- keep wrapper trees thin and generated
+- keep skill metadata portable and lowercase-hyphenated
+- reuse shared doctrine in `skills/frontend-design/reference/` when guidance would otherwise be duplicated
+- preserve the repository’s design point of view; do not drift toward generic skills-starter language
+
+## Local workflow
+
+See [`DEVELOPMENT.md` → Quick start](DEVELOPMENT.md#quick-start) and [`DEVELOPMENT.md` → Recommended workflow](DEVELOPMENT.md#recommended-workflow) for the canonical maintainer commands.
+
+## Pull request checklist
+
+- [ ] Canonical changes were made in `skills/` or other source files, not generated wrappers
+- [ ] Wrapper trees were regenerated after any skill rename, add, remove, or frontmatter change
+- [ ] `npm run validate` passes locally
+- [ ] `npm run smoke:list` passes locally
+- [ ] `npm run smoke:install` passes locally when install or discovery behavior changed
+- [ ] `README.md` was updated when discoverability or maintainer guidance changed
+- [ ] New or changed skills still describe both what they do and when to use them
+- [ ] Attribution in [`NOTICE.md`](NOTICE.md) remains accurate
+
+## Quality bar for skills
+
+- Prefer concise, trigger-friendly descriptions that lead with user intent.
+- Write descriptions in imperative form and explicitly say when to load the skill, usually with `Use when...`.
+- Mention realistic trigger contexts and overlap boundaries instead of long implementation menus or vague promises.
+- Keep `SKILL.md` focused on workflow; move repeated doctrine into `reference/` files.
+- Avoid duplicate doctrine across skills when a shared reference would do.
+- Preserve canonical naming such as `add-ui` when hosts expose friendlier aliases.
+
+When tuning a description, sanity-check it against a small mix of realistic should-trigger and should-not-trigger prompts before merging. Favor near-miss negatives over obviously unrelated prompts so you catch overlap problems early.
+
+Before creating a new shared reference, check the existing doctrine maps first instead of maintaining another copy of the same catalog here:
+
+- [`README.md` → Shared design doctrine](README.md#shared-design-doctrine) for the public-facing reference index grouped by need
+- [`DEVELOPMENT.md` → High-signal doctrine map](DEVELOPMENT.md#high-signal-doctrine-map) for the maintainer-oriented map grouped by editing workflow
+
+In many cases the right fix is to strengthen an existing reference instead of adding a new one.
+
+### React fallback defaults
+
+Before adding new React/Tailwind guidance, check the existing source-of-truth docs first:
+
+- [`skills/frontend-design/reference/component-and-block-strategy.md`](skills/frontend-design/reference/component-and-block-strategy.md)
+- [`skills/add-ui/reference/component-library-integration.md`](skills/add-ui/reference/component-library-integration.md)
+- [`skills/add-ui/assets/component-library-integration-checklist.md`](skills/add-ui/assets/component-library-integration-checklist.md)
+
+Prefer extending those docs over duplicating shadcn/ui, blocks, re-ui, or Tailwind usage guidance elsewhere.
+
+## Proposing a new skill
+
+Before adding a brand-new skill, first check whether the idea should instead:
+
+- strengthen an existing skill
+- add a shared reference under `skills/frontend-design/reference/`
+- improve README / maintainer guidance rather than creating a new command
+
+Propose a new skill when it has a clearly distinct job, trigger pattern, and workflow that would otherwise create confusion or overload an existing skill.
+
+Good questions to answer before opening a pull request:
+
+- What unique problem does this skill solve?
+- Which existing skills are closest, and why are they not enough?
+- Should the doctrine live in a shared reference instead of a new skill?
+- Will the skill remain broadly useful to the library, not just one narrow project case?
+
+If the answer is still "new skill," follow the adding-a-skill workflow in [`DEVELOPMENT.md`](DEVELOPMENT.md) and update discoverability docs accordingly.
+
+## Questions
+
+- repository rules: [`AGENTS.md`](AGENTS.md)
+- maintainer workflow: [`DEVELOPMENT.md`](DEVELOPMENT.md)
+- public-facing project context: [`README.md`](README.md)
