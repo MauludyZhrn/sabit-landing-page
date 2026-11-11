@@ -126,16 +126,9 @@ function populateLinks(): void {
     el.setAttribute('download', APP_CONFIG.windowsInstallerFilename);
   });
 
-  // GitHub Repo Links
+  // GitHub Repo Links (Official Desktop Application)
   document.querySelectorAll<HTMLAnchorElement>('[data-action="github-repo"]').forEach(el => {
     el.href = APP_CONFIG.githubRepoUrl;
-    el.setAttribute('target', '_blank');
-    el.setAttribute('rel', 'noopener noreferrer');
-  });
-
-  // GitHub Releases Links
-  document.querySelectorAll<HTMLAnchorElement>('[data-action="github-releases"]').forEach(el => {
-    el.href = APP_CONFIG.githubReleasesUrl;
     el.setAttribute('target', '_blank');
     el.setAttribute('rel', 'noopener noreferrer');
   });
