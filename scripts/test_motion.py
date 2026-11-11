@@ -96,7 +96,7 @@ def cdp_screenshot(ws, out_path, msg_id):
     return False
 
 def test_motion():
-    print("=== SABIT MOTION INTERACTION & ACCESSIBILITY VALIDATION ===")
+    print("=== SABIT PHASE 3 CINEMATIC SECTION & MOTION VALIDATION ===")
 
     server = socketserver.TCPServer(("127.0.0.1", PORT), lambda *args: http.server.SimpleHTTPRequestHandler(*args, directory=DIRECTORY))
     threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -197,14 +197,90 @@ def test_motion():
         assert toggle_res.get('pausedAfterClick'), "Pause button failed to apply .motion-paused"
         assert toggle_res.get('resumedAfterSecondClick'), "Pause button failed to resume"
 
-        # 3. Interactive 3D Perspective Tilt on Application Showcase
+        # 3. Geometry Diagram & MABIMS Parameter Spotlight Keyboard & Click Test
+        msg_id += 1
+        geom_res = cdp_eval(ws, """
+        (() => {
+            const svg = document.querySelector('.ephemeris-svg');
+            const paths = document.querySelectorAll('.draw-path');
+            const criteria = document.querySelectorAll('.criteria-item');
+            if (!svg || criteria.length < 3) return { error: 'Missing diagram elements' };
+
+            // Simulate Keyboard Enter key on Parameter 2 (Elongation)
+            criteria[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            const param2Active = criteria[1].classList.contains('active');
+            const param2Selected = criteria[1].getAttribute('aria-selected') === 'true';
+
+            // Simulate Click on Parameter 1 (Altitude)
+            criteria[0].click();
+            const param1Active = criteria[0].classList.contains('active');
+
+            return {
+                svgFound: !!svg,
+                pathsCount: paths.length,
+                param2Active,
+                param2Selected,
+                param1Active
+            };
+        })()
+        """, msg_id)
+        print("3. Geometry & MABIMS Interactive Parameter Spotlight:")
+        print(f"   - SVG Diagram found with {geom_res.get('pathsCount')} draw paths")
+        print(f"   - Keyboard Enter on Param 2 activated: {geom_res.get('param2Active')} (aria-selected: {geom_res.get('param2Selected')})")
+        print(f"   - Click on Param 1 activated: {geom_res.get('param1Active')}")
+        assert geom_res.get('param1Active'), "Criteria item click failed to activate"
+
+        # 4. Application Showcase Hotspots & Bidirectional Card Sync
+        msg_id += 1
+        hotspots_res = cdp_eval(ws, """
+        (() => {
+            const hotspots = document.querySelectorAll('.ui-hotspot');
+            const cards = document.querySelectorAll('.inspector-card');
+            if (hotspots.length !== 5 || cards.length !== 5) {
+                return { error: 'Expected 5 hotspots and 5 cards', hCount: hotspots.length, cCount: cards.length };
+            }
+
+            // Test clicking hotspot 2 (Ephemeris)
+            hotspots[1].click();
+            const card2Active = cards[1].classList.contains('active');
+            const hotspot2Active = hotspots[1].classList.contains('active');
+
+            // Test clicking card 4 (Toolbar)
+            cards[3].click();
+            const card4Active = cards[3].classList.contains('active');
+            const hotspot4Active = hotspots[3].classList.contains('active');
+
+            // Test Keyboard Enter on Hotspot 5 (Telemetry)
+            hotspots[4].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            const card5Active = cards[4].classList.contains('active');
+
+            return {
+                hotspotCount: hotspots.length,
+                cardCount: cards.length,
+                card2Active,
+                hotspot2Active,
+                card4Active,
+                hotspot4Active,
+                card5Active
+            };
+        })()
+        """, msg_id)
+        print("4. Application Showcase Hotspots & Bidirectional Sync:")
+        print(f"   - Hotspots count: {hotspots_res.get('hotspotCount')}, Cards count: {hotspots_res.get('cardCount')}")
+        print(f"   - Clicking Hotspot 2 activates Card 2: {hotspots_res.get('card2Active')}")
+        print(f"   - Clicking Card 4 activates Hotspot 4: {hotspots_res.get('hotspot4Active')}")
+        print(f"   - Keyboard Enter on Hotspot 5 activates Card 5: {hotspots_res.get('card5Active')}")
+        assert hotspots_res.get('card2Active'), "Hotspot click failed to activate card"
+        assert hotspots_res.get('hotspot4Active'), "Card click failed to activate hotspot"
+        assert hotspots_res.get('card5Active'), "Keyboard activation failed"
+
+        # 5. Interactive 3D Perspective Tilt on Application Showcase
         msg_id += 1
         tilt_res = cdp_eval(ws, """
         (async () => {
             const stage = document.querySelector('.screenshot-stage');
             if (!stage) return { error: 'No stage' };
             const rect = stage.getBoundingClientRect();
-            // Dispatch pointermove near top-left of stage to trigger 3D perspective tilt
             stage.dispatchEvent(new MouseEvent('mousemove', {
                 clientX: rect.left + 50,
                 clientY: rect.top + 50,
@@ -218,10 +294,88 @@ def test_motion():
             };
         })()
         """, msg_id)
-        print("3. Application Showcase 3D Perspective Tilt:")
         print(f"   - Mouse Tilt Transform Applied: {tilt_res.get('transformApplied')}")
 
-        # 4. Scroll Reveal & Capturing Visual Evidence across Scroll Positions
+        # 6. Workflow Timeline Progress & Desktop Track
+        msg_id += 1
+        wf_res = cdp_eval(ws, """
+        (() => {
+            const desktopTrack = document.querySelector('.workflow-desktop-track');
+            const desktopFill = document.querySelector('.workflow-desktop-fill');
+            const steps = document.querySelectorAll('.workflow-step');
+            return {
+                desktopTrackExists: !!desktopTrack,
+                desktopFillExists: !!desktopFill,
+                stepsCount: steps.length
+            };
+        })()
+        """, msg_id)
+        print("5. Workflow Timeline Observation Journey:")
+        print(f"   - Desktop progress track exists: {wf_res.get('desktopTrackExists')}")
+        print(f"   - Desktop progress fill exists: {wf_res.get('desktopFillExists')}")
+        print(f"   - Step cards count: {wf_res.get('stepsCount')}")
+        assert wf_res.get('stepsCount') == 4, "Expected 4 workflow steps"
+
+        # 7. Roadmap Section Branching Connector & Status Categories
+        msg_id += 1
+        roadmap_res = cdp_eval(ws, """
+        (() => {
+            const connectorSvg = document.querySelector('.roadmap-connector-svg');
+            const stem = document.querySelector('.roadmap-stem-line');
+            const spine = document.querySelector('.roadmap-spine-line');
+            const branches = document.querySelectorAll('.roadmap-branch-line');
+            const baseline = document.querySelector('.roadmap-baseline-card');
+            const cards = document.querySelectorAll('.roadmap-item-card');
+            const currentBadge = document.querySelector('.badge-status-current');
+            const exploreBadges = document.querySelectorAll('.badge-status-explore');
+            const evalBadge = document.querySelector('.badge-status-eval');
+            const planBadge = document.querySelector('.badge-status-plan');
+
+            return {
+                connectorExists: !!connectorSvg,
+                stemExists: !!stem,
+                spineExists: !!spine,
+                branchesCount: branches.length,
+                baselineExists: !!baseline,
+                cardsCount: cards.length,
+                hasCurrentStatus: currentBadge ? currentBadge.textContent.trim() : null,
+                exploreCount: exploreBadges.length,
+                hasEvalStatus: evalBadge ? evalBadge.textContent.trim() : null,
+                hasPlanStatus: planBadge ? planBadge.textContent.trim() : null
+            };
+        })()
+        """, msg_id)
+        print("6. Research Roadmap Cinematic Spine & Badges:")
+        print(f"   - Branching connector SVG exists: {roadmap_res.get('connectorExists')} ({roadmap_res.get('branchesCount')} branch lines)")
+        print(f"   - Baseline card exists: {roadmap_res.get('baselineExists')}")
+        print(f"   - Current status badge: '{roadmap_res.get('hasCurrentStatus')}'")
+        print(f"   - Exploration areas count: {roadmap_res.get('cardsCount')} (Eksplorasi: {roadmap_res.get('exploreCount')}, Evaluasi: '{roadmap_res.get('hasEvalStatus')}', Rencana: '{roadmap_res.get('hasPlanStatus')}')")
+        assert roadmap_res.get('baselineExists'), "Missing roadmap baseline card"
+        assert roadmap_res.get('cardsCount') == 4, "Expected 4 roadmap exploration cards"
+
+        # 8. Technical Foundation & Verified Downloads Integrity
+        msg_id += 1
+        tech_res = cdp_eval(ws, """
+        (() => {
+            const installerBtn = document.querySelector('[data-action="download-installer"]');
+            const repoBtn = document.querySelector('[data-action="github-repo"]');
+            const techItems = document.querySelectorAll('.tech-item');
+            return {
+                techItemsCount: techItems.length,
+                installerHref: installerBtn ? installerBtn.getAttribute('href') : null,
+                repoHref: repoBtn ? repoBtn.getAttribute('href') : null,
+                repoTarget: repoBtn ? repoBtn.getAttribute('target') : null
+            };
+        })()
+        """, msg_id)
+        print("7. Technical Foundation & Download Integrity:")
+        print(f"   - Tech items count: {tech_res.get('techItemsCount')}")
+        print(f"   - Windows Installer URL: {tech_res.get('installerHref')}")
+        print(f"   - Sabit Application Repo URL: {tech_res.get('repoHref')} (target: {tech_res.get('repoTarget')})")
+        assert "Sabit-Setup" in str(tech_res.get('installerHref')), "Installer URL invalid"
+        assert tech_res.get('repoHref') == "https://github.com/MauludyZhrn/Sabit", "Application repo URL invalid"
+
+        # 9. Scroll-Triggered Progress & Visual Evidence Captures for All 6 Sections
         scroll_targets = [
             ("scroll_hero", 0, "Hero & Celestial Orbital Space"),
             ("scroll_geometri", 700, "Geometri Pengamatan & Kriteria MABIMS"),
@@ -231,7 +385,7 @@ def test_motion():
             ("scroll_teknis", 4000, "Spesifikasi Teknis & Download")
         ]
 
-        print("4. Scroll-Triggered Progress & Visual Evidence Captures:")
+        print("8. Scroll-Triggered Progress & Visual Evidence Captures:")
         for name, scroll_y, label in scroll_targets:
             msg_id += 1
             cdp_eval(ws, f"window.scrollTo({{ top: {scroll_y}, behavior: 'instant' }});", msg_id)
@@ -242,21 +396,7 @@ def test_motion():
             size = os.path.getsize(out_file) if os.path.exists(out_file) else 0
             print(f"   - Captured {label} (y={scroll_y}px) -> {name}.png ({size:,} bytes)")
 
-        # 5. Workflow Timeline Progress Scrub Check
-        msg_id += 1
-        wf_check = cdp_eval(ws, """
-        (() => {
-            const fill = document.querySelector('.workflow-progress-fill');
-            const track = document.querySelector('.workflow-progress-track');
-            return {
-                fillExists: !!fill,
-                fillTransform: fill ? window.getComputedStyle(fill).transform : null
-            };
-        })()
-        """, msg_id)
-        print(f"5. Workflow Scrubbed Timeline Progress: fillExists={wf_check.get('fillExists')}, transform={wf_check.get('fillTransform')}")
-
-        # 6. Prefers-Reduced-Motion Emulation
+        # 10. Prefers-Reduced-Motion Emulation
         msg_id += 1
         ws_send(ws, json.dumps({
             "id": msg_id,
@@ -268,10 +408,10 @@ def test_motion():
         time.sleep(0.5)
         msg_id += 1
         reduced_test = cdp_eval(ws, "window.matchMedia('(prefers-reduced-motion: reduce)').matches", msg_id)
-        print(f"6. Reduced Motion Media Query Active: {reduced_test}")
+        print(f"9. Reduced Motion Media Query Active: {reduced_test}")
         assert reduced_test, "prefers-reduced-motion media feature was not emulated properly"
 
-        # 7. Window Resize Resilience
+        # 11. Window Resize Resilience to Tablet & Mobile
         msg_id += 1
         ws_send(ws, json.dumps({
             "id": msg_id,
@@ -290,10 +430,10 @@ def test_motion():
             };
         })()
         """, msg_id)
-        print(f"7. Viewport Resize to Tablet 768px: canvasWidth={resize_test.get('canvasWidth')}, headerVisible={resize_test.get('headerVisible')}")
+        print(f"10. Viewport Resize to Tablet 768px: canvasWidth={resize_test.get('canvasWidth')}, headerVisible={resize_test.get('headerVisible')}")
         assert resize_test.get('headerVisible'), "Header is not visible after resize"
 
-        print("\n=== ALL MOTION INTERACTION & ACCESSIBILITY TESTS PASSED ===")
+        print("\n=== ALL CINEMATIC SECTION & MOTION INTERACTION TESTS PASSED ===")
         return True
 
     finally:

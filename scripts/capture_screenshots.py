@@ -9,7 +9,7 @@ import http.server
 import socketserver
 import threading
 
-PORT = 5230
+PORT = 5250
 DIRECTORY = "dist"
 
 def ws_connect(host, port, path):
@@ -54,12 +54,6 @@ def ws_recv(s):
 
 def capture_all():
     os.makedirs("artifacts/screenshots", exist_ok=True)
-    for f in os.listdir("artifacts/screenshots"):
-        if f.endswith(".png"):
-            try:
-                os.remove(os.path.join("artifacts/screenshots", f))
-            except Exception:
-                pass
 
     server = socketserver.TCPServer(("127.0.0.1", PORT), lambda *args: http.server.SimpleHTTPRequestHandler(*args, directory=DIRECTORY))
     server_thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -99,6 +93,15 @@ def capture_all():
         ("desktop_1920", 1920, 1080, False)
     ]
 
+    scroll_positions = [
+        ("scroll_hero", 0, "Hero & Orbital Viewport"),
+        ("scroll_geometri", 700, "Geometri & Kriteria MABIMS"),
+        ("scroll_evidence", 1500, "Bukti Antarmuka Desktop"),
+        ("scroll_workflow", 2300, "Alur Kerja Observasi"),
+        ("scroll_roadmap", 3200, "Roadmap Riset"),
+        ("scroll_teknis", 4000, "Spesifikasi Teknis & Unduh")
+    ]
+
     try:
         req = urllib.request.urlopen(f"http://127.0.0.1:{debug_port}/json")
         targets = json.loads(req.read().decode())
@@ -111,6 +114,7 @@ def capture_all():
         ws_send(ws, json.dumps({"id": msg_id, "method": "Page.navigate", "params": {"url": f"http://127.0.0.1:{PORT}/"}}))
         time.sleep(2)
 
+        # 1. Capture 8 Responsive Viewports
         for name, w, h, is_mobile in viewports:
             msg_id += 1
             ws_send(ws, json.dumps({
@@ -145,6 +149,48 @@ def capture_all():
                         with open(out_path, "wb") as f:
                             f.write(img_data)
                         print(f"Captured {name} ({w}x{h}): {len(img_data):,} bytes")
+                        break
+                except Exception:
+                    continue
+
+        # 2. Capture Section Scroll States at 1440x900
+        msg_id += 1
+        ws_send(ws, json.dumps({
+            "id": msg_id,
+            "method": "Emulation.setDeviceMetricsOverride",
+            "params": { "width": 1440, "height": 900, "deviceScaleFactor": 1, "mobile": False }
+        }))
+        time.sleep(0.5)
+
+        for name, y_pos, label in scroll_positions:
+            msg_id += 1
+            ws_send(ws, json.dumps({
+                "id": msg_id,
+                "method": "Runtime.evaluate",
+                "params": { "expression": f"window.scrollTo({{ top: {y_pos}, behavior: 'instant' }});" }
+            }))
+            time.sleep(0.8)
+
+            msg_id += 1
+            shot_id = msg_id
+            ws_send(ws, json.dumps({
+                "id": shot_id,
+                "method": "Page.captureScreenshot",
+                "params": {"format": "png"}
+            }))
+
+            while True:
+                resp_str = ws_recv(ws)
+                if not resp_str:
+                    break
+                try:
+                    msg = json.loads(resp_str)
+                    if msg.get("id") == shot_id and "result" in msg:
+                        img_data = base64.b64decode(msg["result"]["data"])
+                        out_path = f"artifacts/screenshots/{name}.png"
+                        with open(out_path, "wb") as f:
+                            f.write(img_data)
+                        print(f"Captured {name} [y={y_pos}px]: {len(img_data):,} bytes ({label})")
                         break
                 except Exception:
                     continue

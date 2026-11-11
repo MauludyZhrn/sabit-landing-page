@@ -1,9 +1,13 @@
 // ============================================================================
-// SABIT MOTION DESIGN SYSTEM & ARCHITECTURE (V2)
+// SABIT MOTION DESIGN SYSTEM & ARCHITECTURE (V2 — PHASE 3)
 // Precision Observatory Motion Engine
 // Built with GSAP, ScrollTrigger, and Responsive matchMedia.
-// Provides cinematic section reveals, staggered headlines, interactive 3D perspective
-// tilts, timeline scrubbing, selenographic HUD synchronizations, and WCAG 2.2.2 controls.
+// Section-specific cinematic experiences:
+//   - Astronomical Geometry: Coordinated vector line-drawing & MABIMS spotlight
+//   - Authentic Evidence Showcase: Aperture mask reveal, sequential hotspots, & 3D tilt
+//   - Interactive Workflow: Dual-axis scroll-linked progress track & stage nodes
+//   - Research Roadmap: Branching SVG timeline spine, milestone nodes, & distinct status beacons
+//   - Technical & Download: Precision micro-interactions, tactile buttons, & WCAG 2.2.2 controls
 // ============================================================================
 
 import gsap from 'gsap';
@@ -19,6 +23,7 @@ export const MOTION_TOKENS = {
   easeEditorial: 'cubic-bezier(0.16, 1, 0.3, 1)',
   easeGentle: 'power2.out',
   easeDramatic: 'power3.out',
+  easeSpring: 'back.out(1.8)',
   easeLinear: 'none',
 
   // Restrained Durations (seconds)
@@ -120,94 +125,156 @@ export function initMotionSystem(): MotionSystemController {
       // 3. Staggered Section Headers Reveal
       initSectionHeaderReveals();
 
-      // 4. Application Showcase (Evidence) Window Reveal & 3D Tilt
-      gsap.from('.screenshot-stage', {
-        opacity: 0.85,
-        y: 28,
-        duration: MOTION_TOKENS.durCinematic,
-        ease: MOTION_TOKENS.easeGentle,
-        scrollTrigger: {
-          trigger: '.screenshot-stage',
-          start: 'top 85%',
-          once: true
-        }
-      });
-
-      initScreenshot3DTilt();
-
-      // 5. Workflow Scrubbed Connected Timeline Line
-      gsap.fromTo('.workflow-progress-fill',
-        { scaleY: 0 },
-        {
-          scaleY: 1,
-          ease: MOTION_TOKENS.easeLinear,
-          transformOrigin: 'top center',
+      // 4. Evidence Section: Cinematic Screenshot Mask Reveal, Sequential Hotspots & 3D Tilt
+      const screenshotStage = document.querySelector<HTMLElement>('.screenshot-stage');
+      if (screenshotStage) {
+        const evidenceTl = gsap.timeline({
           scrollTrigger: {
-            trigger: '.workflow-timeline',
-            start: 'top 75%',
-            end: 'bottom 85%',
-            scrub: 0.6
+            trigger: screenshotStage,
+            start: 'top 82%',
+            once: true
           }
-        }
-      );
+        });
 
-      // Sequential active workflow step highlight
+        evidenceTl
+          .from(screenshotStage, {
+            opacity: 0.8,
+            y: 28,
+            scale: 0.985,
+            duration: MOTION_TOKENS.durCinematic,
+            ease: MOTION_TOKENS.easeGentle,
+            onComplete: () => {
+              screenshotStage.classList.add('stage-lit');
+            }
+          })
+          .fromTo('.ui-hotspot',
+            { scale: 0, opacity: 0 },
+            {
+              scale: 1,
+              opacity: 1,
+              duration: 0.45,
+              stagger: 0.08,
+              ease: MOTION_TOKENS.easeSpring
+            },
+            '-=0.35'
+          );
+
+        initScreenshot3DTilt();
+      }
+
+      // 5. Workflow: Horizontal Progress Track & Sequential Stage Nodes
+      const workflowTimeline = document.querySelector<HTMLElement>('.workflow-timeline');
+      const desktopFill = document.querySelector<HTMLElement>('.workflow-desktop-fill');
       const steps = gsap.utils.toArray<HTMLElement>('.workflow-step');
-      steps.forEach((step, idx) => {
-        gsap.from(step, {
+      const desktopNodes = gsap.utils.toArray<HTMLElement>('.workflow-desktop-nodes .workflow-node');
+
+      if (workflowTimeline && desktopFill) {
+        ScrollTrigger.create({
+          trigger: workflowTimeline,
+          start: 'top 75%',
+          end: 'bottom 60%',
+          scrub: 0.5,
+          onUpdate: (self) => {
+            const p = self.progress;
+            desktopFill.style.width = `${Math.max(15, p * 100)}%`;
+
+            // Sequential step highlighting based on progress quartile
+            const activeIdx = Math.min(Math.floor(p * steps.length), steps.length - 1);
+            steps.forEach((step, idx) => {
+              const isActive = idx === activeIdx;
+              const isPast = idx < activeIdx;
+              step.classList.toggle('active', isActive);
+              step.classList.toggle('completed', isPast);
+            });
+
+            desktopNodes.forEach((node, idx) => {
+              node.classList.toggle('active', idx === activeIdx);
+              node.classList.toggle('completed', idx < activeIdx);
+            });
+          }
+        });
+
+        // Entrance stagger for workflow cards
+        gsap.from(steps, {
+          opacity: 0.8,
+          y: 22,
+          duration: MOTION_TOKENS.durStandard,
+          stagger: 0.10,
+          ease: MOTION_TOKENS.easeGentle,
+          scrollTrigger: {
+            trigger: workflowTimeline,
+            start: 'top 82%',
+            once: true
+          }
+        });
+      }
+
+      // 6. Roadmap: Branching SVG Connector Line & Progressive Area Cards
+      const roadmapBox = document.querySelector<HTMLElement>('.roadmap-timeline-box');
+      const connectorLines = document.querySelectorAll<SVGGeometryElement>(
+        '.roadmap-stem-line, .roadmap-spine-line, .roadmap-branch-line'
+      );
+      const connectorCircles = document.querySelectorAll<SVGElement>('.roadmap-node-circle');
+
+      if (roadmapBox) {
+        // Pre-measure connector paths
+        connectorLines.forEach(line => {
+          try {
+            const len = line.getTotalLength();
+            line.style.strokeDasharray = `${len}`;
+            line.style.strokeDashoffset = `${len}`;
+          } catch {
+            line.style.strokeDashoffset = '0';
+          }
+        });
+
+        const roadmapTl = gsap.timeline({
+          scrollTrigger: {
+            trigger: roadmapBox,
+            start: 'top 82%',
+            once: true
+          }
+        });
+
+        // Step A: Baseline Card Entrance
+        roadmapTl.from('.roadmap-baseline-card', {
           opacity: 0.8,
           y: 20,
           duration: MOTION_TOKENS.durStandard,
-          delay: idx * 0.1,
-          scrollTrigger: {
-            trigger: '.workflow-timeline',
-            start: 'top 80%',
-            once: true
-          }
+          ease: MOTION_TOKENS.easeGentle
         });
 
-        ScrollTrigger.create({
-          trigger: step,
-          start: 'top 75%',
-          end: 'bottom 25%',
-          onEnter: () => step.classList.add('active'),
-          onEnterBack: () => step.classList.add('active'),
-          onLeave: () => step.classList.remove('active'),
-          onLeaveBack: () => step.classList.remove('active')
+        // Step B: Draw connecting SVG branches
+        connectorLines.forEach((line) => {
+          roadmapTl.to(line, {
+            strokeDashoffset: 0,
+            duration: 0.4,
+            ease: 'power1.out'
+          }, '-=0.2');
         });
-      });
 
-      // 6. Roadmap Section Progressive Entrance
-      gsap.from('.roadmap-baseline-card', {
-        opacity: 0.8,
-        y: 20,
-        duration: MOTION_TOKENS.durStandard,
-        ease: MOTION_TOKENS.easeGentle,
-        scrollTrigger: {
-          trigger: '.roadmap-timeline-box',
-          start: 'top 85%',
-          once: true
+        // Step C: Pop in junction dots
+        if (connectorCircles.length) {
+          roadmapTl.fromTo(connectorCircles,
+            { scale: 0, transformOrigin: 'center center' },
+            { scale: 1, duration: 0.35, stagger: 0.05, ease: MOTION_TOKENS.easeSpring },
+            '-=0.25'
+          );
         }
-      });
 
-      const roadmapCards = gsap.utils.toArray<HTMLElement>('.roadmap-item-card');
-      roadmapCards.forEach((card, idx) => {
-        // Subtle lateral bias based on column for architectural feel
-        const xOffset = idx % 2 === 0 ? -12 : 12;
-        gsap.from(card, {
-          opacity: 0.8,
-          x: xOffset,
-          y: 16,
-          duration: MOTION_TOKENS.durStandard,
-          delay: idx * MOTION_TOKENS.staggerStandard,
-          ease: MOTION_TOKENS.easeGentle,
-          scrollTrigger: {
-            trigger: '.roadmap-grid',
-            start: 'top 85%',
-            once: true
-          }
+        // Step D: Stagger reveal the 4 Exploration Cards with subtle architectural bias
+        const roadmapCards = gsap.utils.toArray<HTMLElement>('.roadmap-item-card');
+        roadmapCards.forEach((card, idx) => {
+          const xOffset = idx % 2 === 0 ? -12 : 12;
+          roadmapTl.from(card, {
+            opacity: 0.8,
+            x: xOffset,
+            y: 18,
+            duration: MOTION_TOKENS.durStandard,
+            ease: MOTION_TOKENS.easeGentle
+          }, `-=${idx === 0 ? 0.2 : 0.35}`);
         });
-      });
+      }
 
       // 7. Tech Foundation & Download Section
       gsap.from('.tech-item', {
@@ -251,6 +318,19 @@ export function initMotionSystem(): MotionSystemController {
 
       initSectionHeaderReveals();
 
+      // Evidence reveal
+      gsap.from('.screenshot-stage', {
+        opacity: 0.85,
+        y: 20,
+        duration: MOTION_TOKENS.durStandard,
+        scrollTrigger: {
+          trigger: '.screenshot-stage',
+          start: 'top 85%',
+          once: true
+        }
+      });
+
+      // Workflow cards reveal
       gsap.from('.workflow-step', {
         opacity: 0.8,
         y: 16,
@@ -263,13 +343,14 @@ export function initMotionSystem(): MotionSystemController {
         }
       });
 
-      gsap.from('.roadmap-item-card', {
+      // Roadmap cards reveal
+      gsap.from('.roadmap-baseline-card, .roadmap-item-card', {
         opacity: 0.8,
         y: 16,
         duration: MOTION_TOKENS.durFast,
         stagger: MOTION_TOKENS.staggerTight,
         scrollTrigger: {
-          trigger: '.roadmap-grid',
+          trigger: '.roadmap-timeline-box',
           start: 'top 85%',
           once: true
         }
@@ -288,7 +369,25 @@ export function initMotionSystem(): MotionSystemController {
         stagger: 0.05,
         ease: MOTION_TOKENS.easeGentle
       });
-      // Content remains immediately visible and responsive without heavy scrub triggers
+
+      // Vertical workflow progress bar linking to native scroll
+      const mobileTrack = document.querySelector<HTMLElement>('.workflow-timeline');
+      const mobileFill = document.querySelector<HTMLElement>('.workflow-progress-fill');
+      if (mobileTrack && mobileFill) {
+        gsap.fromTo(mobileFill,
+          { scaleY: 0 },
+          {
+            scaleY: 1,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: mobileTrack,
+              start: 'top 80%',
+              end: 'bottom 60%',
+              scrub: 0.5
+            }
+          }
+        );
+      }
     });
 
     // Refresh ScrollTrigger calculations after all static assets decode
@@ -501,43 +600,68 @@ function initMobileDrawer(): void {
 }
 
 // ---------------------------------------------------------------------------
-// 8. Application Showcase Interactive Hotspots
+// 8. Application Showcase Interactive Hotspots & Bidirectional Card Sync
 // ---------------------------------------------------------------------------
 function initScreenshotHotspots(): void {
   const hotspots = document.querySelectorAll<HTMLButtonElement>('.ui-hotspot');
   const detailCards = document.querySelectorAll<HTMLElement>('.inspector-card');
 
+  function activateSubsystem(targetId: string | null): void {
+    if (!targetId) return;
+
+    hotspots.forEach(h => {
+      const isMatch = h.getAttribute('data-target') === targetId;
+      h.classList.toggle('active', isMatch);
+      h.setAttribute('aria-expanded', isMatch ? 'true' : 'false');
+    });
+
+    detailCards.forEach(card => {
+      const isMatch = card.getAttribute('id') === targetId;
+      card.classList.toggle('active', isMatch);
+      card.setAttribute('aria-selected', isMatch ? 'true' : 'false');
+      if (isMatch) {
+        card.focus?.({ preventScroll: true });
+        gsap.fromTo(card,
+          { scale: 0.98, opacity: 0.85 },
+          { scale: 1.0, opacity: 1.0, duration: 0.35, ease: MOTION_TOKENS.easeGentle }
+        );
+
+        // On mobile viewports, scroll card into view gently if below fold
+        if (window.innerWidth < 768) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+    });
+  }
+
+  // Hotspot click & keyboard activation
   hotspots.forEach(hotspot => {
     hotspot.addEventListener('click', () => {
       const targetId = hotspot.getAttribute('data-target');
+      activateSubsystem(targetId);
+    });
 
-      hotspots.forEach(h => {
-        const isMatch = h === hotspot;
-        h.classList.toggle('active', isMatch);
-        h.setAttribute('aria-expanded', isMatch ? 'true' : 'false');
-      });
-
-      detailCards.forEach(card => {
-        const isTarget = card.getAttribute('id') === targetId;
-        card.classList.toggle('active', isTarget);
-        if (isTarget) {
-          card.focus?.({ preventScroll: true });
-          gsap.fromTo(card,
-            { scale: 0.98, opacity: 0.85 },
-            { scale: 1.0, opacity: 1.0, duration: 0.35, ease: MOTION_TOKENS.easeGentle }
-          );
-        }
-      });
+    hotspot.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const targetId = hotspot.getAttribute('data-target');
+        activateSubsystem(targetId);
+      }
     });
   });
 
-  // Card clicks also activate corresponding hotspot
+  // Card click & keyboard activation
   detailCards.forEach(card => {
     card.addEventListener('click', () => {
       const cardId = card.getAttribute('id');
-      const matchingHotspot = document.querySelector<HTMLButtonElement>(`.ui-hotspot[data-target="${cardId}"]`);
-      if (matchingHotspot) {
-        matchingHotspot.click();
+      activateSubsystem(cardId);
+    });
+
+    card.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const cardId = card.getAttribute('id');
+        activateSubsystem(cardId);
       }
     });
   });
