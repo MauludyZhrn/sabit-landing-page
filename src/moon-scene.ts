@@ -1,8 +1,8 @@
-// Sabit 3D Moon Centerpiece — Three.js Implementation
+// Sabit 3D Moon Centerpiece — Three.js Implementation (Optimized Phase 4)
 // Powered by official NASA CGI Moon Kit (LRO color map + LOLA elevation map)
-// Features: Grazing key light (~72° terminator), crater displacement relief,
-// desktop mouse parallax, scroll-linked rotation scrub, live selenographic HUD telemetry,
-// and automatic static fallback crossfade.
+// Features: Grazing solar key light (~72° terminator), Earthshine directional fill,
+// celestial limb rim light, regolith roughness, adaptive DPR/geometry,
+// intersection-based GPU pausing, throttled telemetry HUD, and WebGL context-loss resilience.
 
 import * as THREE from 'three';
 
@@ -35,6 +35,7 @@ export class MoonScene {
   private isReducedMotion = false;
   private resizeObserver: ResizeObserver | null = null;
   private intersectionObserver: IntersectionObserver | null = null;
+  private resizeRafId: number | null = null;
 
   // Interaction physics & orientation
   private isDragging = false;
@@ -55,14 +56,20 @@ export class MoonScene {
   // Scroll-linked rotation scrub
   private scrollProgress = 0;
 
-  // Very slow natural axial rotation: ~150 seconds per full revolution
+  // Natural axial rotation: ~150 seconds per full revolution
   private baseRotationSpeed = 0.00035;
+
+  // Throttled HUD update state
+  private lastHudUpdate = 0;
+  private lastLoggedCoords = '';
 
   private boundOnPointerDown: (e: PointerEvent) => void;
   private boundOnPointerMove: (e: PointerEvent) => void;
   private boundOnPointerUp: (e: PointerEvent) => void;
   private boundOnVisibilityChange: () => void;
   private boundOnReducedMotionChange: (e: MediaQueryListEvent) => void;
+  private boundOnContextLost: ((e: Event) => void) | null = null;
+  private boundOnContextRestored: (() => void) | null = null;
 
   constructor(options: MoonSceneOptions) {
     this.container = options.container;
@@ -121,13 +128,15 @@ export class MoonScene {
       this.camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 100);
       this.camera.position.set(0, 0, 3.45);
 
-      // 3. Renderer with performance capping (1.5 on desktop, 1.0 on mobile)
+      // 3. Renderer with adaptive DPR (Mobile: 1.0, Tablet: 1.25, Desktop: 1.5 max)
       const canvas = document.createElement('canvas');
       canvas.className = 'moon-webgl-canvas';
       canvas.setAttribute('aria-hidden', 'true');
+      canvas.style.touchAction = 'pan-y'; // Allow native vertical scrolling while supporting horizontal swipe rotation
 
       const isMobile = window.innerWidth < 768;
-      const maxDpr = isMobile ? 1.0 : Math.min(window.devicePixelRatio || 1, 1.5);
+      const isTablet = window.innerWidth >= 768 && window.innerWidth <= 1024;
+      const dpr = isMobile ? 1.0 : (isTablet ? 1.25 : Math.min(window.devicePixelRatio || 1, 1.5));
 
       this.renderer = new THREE.WebGLRenderer({
         canvas,
@@ -135,36 +144,60 @@ export class MoonScene {
         antialias: !isMobile,
         powerPreference: 'high-performance'
       });
-      this.renderer.setPixelRatio(maxDpr);
+      this.renderer.setPixelRatio(dpr);
       this.renderer.setSize(width, height);
       this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      this.renderer.toneMappingExposure = 1.05;
+      this.renderer.toneMappingExposure = 1.12;
 
       this.container.appendChild(this.renderer.domElement);
 
-      // 4. Lighting Configuration:
-      // Grazing Key Sunlight (~72° terminator angle) from top-right
-      const sunLight = new THREE.DirectionalLight(0xfffef7, 2.45);
-      sunLight.position.set(2.85, 1.15, 1.60);
+      // Context Loss & Restoration Management
+      this.boundOnContextLost = (e: Event) => {
+        e.preventDefault();
+        console.warn('WebGL context lost: pausing animation loop and displaying static lunar fallback.');
+        this.stopLoop();
+        this.showFallback();
+      };
+      this.boundOnContextRestored = () => {
+        console.info('WebGL context restored: re-initializing Three.js lunar scene.');
+        this.init(options);
+      };
+      canvas.addEventListener('webglcontextlost', this.boundOnContextLost);
+      canvas.addEventListener('webglcontextrestored', this.boundOnContextRestored);
+
+      // 4. Scientifically Plausible 4-Light Configuration:
+      // A. Grazing Key Sunlight (~72° terminator angle) from top-right for authentic crater relief
+      const sunLight = new THREE.DirectionalLight(0xfffdf7, 2.70);
+      sunLight.position.set(2.95, 1.05, 1.50);
       this.scene.add(sunLight);
 
-      // Ambient Earthshine / Deep Space Fill Light: Neutral soft dark navy
-      const ambientLight = new THREE.AmbientLight(0x0e1724, 0.18);
-      this.scene.add(ambientLight);
+      // B. Earthshine Directional Fill Light (cool, deep space slate-blue facing dark hemisphere)
+      const earthshineLight = new THREE.DirectionalLight(0x132032, 0.45);
+      earthshineLight.position.set(-1.8, -0.4, 2.0);
+      this.scene.add(earthshineLight);
 
-      // Subtle Rim/Glance Light for delicate celestial limb silhouette
-      const rimLight = new THREE.DirectionalLight(0x738fa8, 0.42);
-      rimLight.position.set(-2.6, 0.5, -1.1);
+      // C. Deep Cosmic Space Ambient
+      const spaceAmbient = new THREE.AmbientLight(0x070c14, 0.12);
+      this.scene.add(spaceAmbient);
+
+      // D. Delicate Celestial Limb Glance/Rim Light (subtle silhouetting on dark limb)
+      const rimLight = new THREE.DirectionalLight(0x4a6a8c, 0.38);
+      rimLight.position.set(-2.8, 0.6, -1.3);
       this.scene.add(rimLight);
 
-      // 5. Geometry: Smooth sphere
-      const segments = isMobile ? 36 : 64;
+      // 5. Geometry: Adaptive segment resolution (Mobile: 40, Tablet: 60, Desktop: 80)
+      const segments = isMobile ? 40 : (isTablet ? 60 : 80);
       this.sphereGeometry = new THREE.SphereGeometry(1.0, segments, segments);
 
-      // 6. NASA Textures Loading (LROC color map + LOLA elevation map)
+      // 6. NASA Textures Loading (LROC color map + LOLA elevation map) with Anisotropic Filtering
       const textureLoader = new THREE.TextureLoader();
       const albedoPath = options.albedoUrl || '/textures/lroc_color_2k.jpg';
       const bumpPath = options.bumpUrl || '/textures/ldem_3_8bit.jpg';
+
+      const maxAnisotropy = Math.min(
+        this.renderer.capabilities.getMaxAnisotropy(),
+        isMobile ? 2 : (isTablet ? 4 : 16)
+      );
 
       let loadedCount = 0;
       const onLoadCheck = () => {
@@ -176,26 +209,27 @@ export class MoonScene {
       };
 
       this.albedoTexture = textureLoader.load(albedoPath, onLoadCheck, undefined, () => {
-        console.warn('NASA albedo texture failed to load, falling back.');
         onLoadCheck();
       });
       this.albedoTexture.colorSpace = THREE.SRGBColorSpace;
       this.albedoTexture.generateMipmaps = true;
       this.albedoTexture.minFilter = THREE.LinearMipmapLinearFilter;
+      this.albedoTexture.anisotropy = maxAnisotropy;
 
       this.bumpTexture = textureLoader.load(bumpPath, onLoadCheck, undefined, () => {
         onLoadCheck();
       });
       this.bumpTexture.generateMipmaps = true;
       this.bumpTexture.minFilter = THREE.LinearMipmapLinearFilter;
+      this.bumpTexture.anisotropy = maxAnisotropy;
 
-      // 7. Material: Physically grounded matte lunar regolith
+      // 7. Material: Physically grounded matte lunar regolith (diffuse retro-reflection)
       this.moonMaterial = new THREE.MeshStandardMaterial({
         map: this.albedoTexture,
         bumpMap: this.bumpTexture,
-        bumpScale: isMobile ? 0.03 : 0.046,
-        roughness: 0.94,
-        metalness: 0.02,
+        bumpScale: isMobile ? 0.038 : 0.054,
+        roughness: 0.95,
+        metalness: 0.0,
         color: 0xffffff
       });
 
@@ -206,26 +240,34 @@ export class MoonScene {
 
       // 8. Event Listeners for Drag-to-Rotate & Desktop Parallax
       this.renderer.domElement.addEventListener('pointerdown', this.boundOnPointerDown);
-      window.addEventListener('pointermove', this.boundOnPointerMove);
+      window.addEventListener('pointermove', this.boundOnPointerMove, { passive: true });
       window.addEventListener('pointerup', this.boundOnPointerUp);
       document.addEventListener('visibilitychange', this.boundOnVisibilityChange);
 
-      // 9. Resize Observer
+      // 9. Debounced Resize Observer
       this.resizeObserver = new ResizeObserver(entries => {
         for (const entry of entries) {
           const { width: w, height: h } = entry.contentRect;
-          if (w > 0 && h > 0) this.resize(w, h);
+          if (w > 0 && h > 0) {
+            if (this.resizeRafId) cancelAnimationFrame(this.resizeRafId);
+            this.resizeRafId = requestAnimationFrame(() => {
+              this.resize(w, h);
+              this.resizeRafId = null;
+            });
+          }
         }
       });
       this.resizeObserver.observe(this.container);
 
-      // 10. Intersection Observer (Pause rendering when offscreen)
+      // 10. Intersection Observer (Halt render loop when scrolled offscreen to conserve GPU)
       this.intersectionObserver = new IntersectionObserver(
         entries => {
           for (const entry of entries) {
             this.isVisible = entry.isIntersecting;
-            if (this.isVisible && !this.isPaused && !this.reqId) {
+            if (this.isVisible && !this.isPaused && !document.hidden) {
               this.startLoop();
+            } else if (!this.isVisible) {
+              this.stopLoop();
             }
           }
         },
@@ -234,6 +276,7 @@ export class MoonScene {
       this.intersectionObserver.observe(this.container);
 
       this.startLoop();
+      (window as any).__sabitMoonDiagnostics = () => this.getDiagnostics();
     } catch (err) {
       console.error('Three.js initialization failed:', err);
       this.showFallback();
@@ -257,7 +300,9 @@ export class MoonScene {
 
   public setPaused(paused: boolean): void {
     this.isPaused = paused;
-    if (!paused && this.isVisible && !this.reqId) {
+    if (paused) {
+      this.stopLoop();
+    } else if (this.isVisible && !document.hidden) {
       this.startLoop();
     }
   }
@@ -279,17 +324,26 @@ export class MoonScene {
   }
 
   private onPointerDown(e: PointerEvent): void {
-    if (e.button !== 0) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
     this.isDragging = true;
     this.previousMousePosition = { x: e.clientX, y: e.clientY };
     if (this.renderer?.domElement) {
       this.renderer.domElement.style.cursor = 'grabbing';
+      if ('setPointerCapture' in this.renderer.domElement) {
+        try {
+          this.renderer.domElement.setPointerCapture(e.pointerId);
+        } catch {
+          // ignore if unsupported
+        }
+      }
     }
   }
 
   private onPointerMove(e: PointerEvent): void {
+    if (!this.isVisible) return;
+
     // 1. Desktop Mouse Parallax (only when not dragging and on wider screens)
-    if (!this.isReducedMotion && window.innerWidth >= 768) {
+    if (!this.isReducedMotion && window.innerWidth >= 768 && !this.isDragging) {
       const normX = (e.clientX / window.innerWidth) - 0.5;
       const normY = (e.clientY / window.innerHeight) - 0.5;
       this.mouseParallaxX = normX * 0.12;
@@ -310,10 +364,17 @@ export class MoonScene {
     this.previousMousePosition = { x: e.clientX, y: e.clientY };
   }
 
-  private onPointerUp(): void {
+  private onPointerUp(e?: PointerEvent): void {
     this.isDragging = false;
     if (this.renderer?.domElement) {
       this.renderer.domElement.style.cursor = 'grab';
+      if (e && 'releasePointerCapture' in this.renderer.domElement) {
+        try {
+          this.renderer.domElement.releasePointerCapture(e.pointerId);
+        } catch {
+          // ignore
+        }
+      }
     }
   }
 
@@ -373,8 +434,12 @@ export class MoonScene {
       this.camera.position.y = -this.currentParallaxY * 0.3 - (this.scrollProgress * 0.15);
       this.camera.lookAt(0, 0, 0);
 
-      // Update live coordinates telemetry HUD
-      this.updateLiveCoordinates();
+      // Throttled HUD update (~12Hz / 80ms)
+      const now = performance.now();
+      if (now - this.lastHudUpdate > 80) {
+        this.updateLiveCoordinates();
+        this.lastHudUpdate = now;
+      }
     }
 
     this.renderer.render(this.scene, this.camera);
@@ -395,15 +460,68 @@ export class MoonScene {
     }
 
     const latStr = `${degX >= 0 ? '+' : ''}${degX.toFixed(1)}°`;
+    const newCoords = `SUB-OBS: ${latStr} ${lonStr} • TERM: 71.8°`;
 
-    this.coordsElement.textContent = `SUB-OBS: ${latStr} ${lonStr} • TERM: 71.8°`;
+    if (newCoords !== this.lastLoggedCoords) {
+      this.coordsElement.textContent = newCoords;
+      this.lastLoggedCoords = newCoords;
+    }
+  }
+
+  public getDiagnostics() {
+    const gl = this.renderer?.getContext();
+    let unmaskedVendor = 'unknown';
+    let unmaskedRenderer = 'unknown';
+    if (gl) {
+      const ext = gl.getExtension('WEBGL_debug_renderer_info');
+      if (ext) {
+        unmaskedVendor = gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) || 'unknown';
+        unmaskedRenderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || 'unknown';
+      }
+    }
+    let centerLuminance = 0;
+    if (this.renderer && this.scene && this.camera && this.moonMesh && gl) {
+      this.renderer.render(this.scene, this.camera);
+      const px = new Uint8Array(4);
+      const midX = Math.floor(gl.drawingBufferWidth / 2);
+      const midY = Math.floor(gl.drawingBufferHeight / 2);
+      gl.readPixels(midX, midY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      centerLuminance = Math.round((px[0] * 0.299 + px[1] * 0.587 + px[2] * 0.114) * 100) / 100;
+    }
+    return {
+      webglVersion: gl && typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext ? 2 : (gl ? 1 : 0),
+      unmaskedVendor,
+      unmaskedRenderer,
+      anisotropy: this.albedoTexture?.anisotropy || 1,
+      roughness: this.moonMaterial?.roughness || 0,
+      metalness: this.moonMaterial?.metalness || 0,
+      bumpScale: this.moonMaterial?.bumpScale || 0,
+      lightCount: this.scene ? this.scene.children.filter(c => c instanceof THREE.Light).length : 0,
+      toneMapping: this.renderer ? this.renderer.toneMapping : null,
+      toneMappingExposure: this.renderer ? this.renderer.toneMappingExposure : null,
+      isAnimating: this.reqId !== null,
+      isPaused: this.isPaused,
+      isVisible: this.isVisible,
+      currentRotationY: this.currentRotationY,
+      centerLuminance,
+      fallbackPosterOpacity: this.posterElement ? parseFloat(window.getComputedStyle(this.posterElement).opacity) : 0
+    };
   }
 
   public destroy(): void {
     this.stopLoop();
+    if (this.resizeRafId) cancelAnimationFrame(this.resizeRafId);
+    this.resizeObserver?.disconnect();
+    this.intersectionObserver?.disconnect();
 
     if (this.renderer?.domElement) {
       this.renderer.domElement.removeEventListener('pointerdown', this.boundOnPointerDown);
+      if (this.boundOnContextLost) {
+        this.renderer.domElement.removeEventListener('webglcontextlost', this.boundOnContextLost);
+      }
+      if (this.boundOnContextRestored) {
+        this.renderer.domElement.removeEventListener('webglcontextrestored', this.boundOnContextRestored);
+      }
       this.renderer.domElement.remove();
     }
     window.removeEventListener('pointermove', this.boundOnPointerMove);
@@ -415,18 +533,10 @@ export class MoonScene {
       media.removeEventListener('change', this.boundOnReducedMotionChange);
     }
 
-    this.resizeObserver?.disconnect();
-    this.intersectionObserver?.disconnect();
-
     this.sphereGeometry?.dispose();
     this.moonMaterial?.dispose();
     this.albedoTexture?.dispose();
     this.bumpTexture?.dispose();
     this.renderer?.dispose();
-
-    this.scene = null;
-    this.camera = null;
-    this.moonMesh = null;
-    this.renderer = null;
   }
 }

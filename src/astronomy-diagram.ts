@@ -1,5 +1,6 @@
 // Astronomy & Ephemeris Geometry Diagram
-// Coordinated SVG line-draw reveals and interactive MABIMS parameter spotlight.
+// Coordinated SVG line-draw reveals, orbital nodes, and interactive MABIMS parameter spotlight.
+// Engineered with GSAP ScrollTrigger, keyboard navigation, and WCAG 2.2.2 compliance.
 
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -22,12 +23,24 @@ export function initAstronomyDiagram(container: HTMLElement): AstronomyDiagramCo
   const criteriaItems = document.querySelectorAll<HTMLElement>('.criteria-item');
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Pre-calculate path lengths
-  const pathLengths = new Map<SVGGeometryElement, number>();
+  // Specific diagram element handles
+  const horizonPath = svg.querySelector<SVGGeometryElement>('.path-horizon');
+  const sunPath = svg.querySelector<SVGGeometryElement>('.path-sun');
+  const altitudePath = svg.querySelector<SVGGeometryElement>('.path-altitude');
+  const elongationPath = svg.querySelector<SVGGeometryElement>('.path-elongation');
+  const thresholdPath = svg.querySelector<SVGGeometryElement>('.path-threshold');
+
+  const sunNode = svg.querySelector<SVGElement>('.diag-node-sun') || svg.querySelectorAll<SVGElement>('.diag-node')[0];
+  const moonNode = svg.querySelector<SVGElement>('.diag-node-moon') || svg.querySelectorAll<SVGElement>('.diag-node')[1];
+  const sunCorona = svg.querySelector<SVGElement>('.sun-corona');
+
+  const altitudeLabel = svg.querySelector<SVGElement>('.label-altitude');
+  const elongationLabel = svg.querySelector<SVGElement>('.label-elongation');
+
+  // Pre-calculate path lengths for precision stroke drawing
   paths.forEach(path => {
     try {
       const len = path.getTotalLength();
-      pathLengths.set(path, len);
       path.style.strokeDasharray = `${len}`;
       path.style.strokeDashoffset = prefersReduced ? '0' : `${len}`;
     } catch {
@@ -36,111 +49,225 @@ export function initAstronomyDiagram(container: HTMLElement): AstronomyDiagramCo
   });
 
   if (prefersReduced) {
-    labels.forEach(l => { (l as SVGElement).style.opacity = '1'; });
+    labels.forEach(l => {
+      (l as HTMLElement | SVGElement).style.opacity = '1';
+    });
   }
 
-  // ScrollTrigger timeline for entering the viewport
   let ctx: gsap.Context | null = null;
+  let coronaTween: gsap.core.Tween | null = null;
+  let isPaused = false;
 
   if (!prefersReduced) {
     ctx = gsap.context(() => {
+      // 1. Progressive Scientific Line Drawing Sequence
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: container,
-          start: 'top 80%',
+          start: 'top 82%',
           once: true
         }
       });
 
-      // Animate SVG stroke drawing sequentially
-      paths.forEach((path, idx) => {
-        tl.to(
-          path,
-          {
-            strokeDashoffset: 0,
-            duration: 0.9,
-            ease: 'power2.out'
-          },
-          idx * 0.18
-        );
-      });
+      // Step A: Observer Horizon line establishes local ground reference (0° Alt)
+      if (horizonPath) {
+        tl.to(horizonPath, {
+          strokeDashoffset: 0,
+          duration: 0.75,
+          ease: 'power2.out'
+        });
+      }
 
-      // Animate labels and nodes gentle entrance
+      // Step B: Sun Sunset Zenith Path & Sun node appearance
+      if (sunPath) {
+        tl.to(sunPath, {
+          strokeDashoffset: 0,
+          duration: 0.5,
+          ease: 'power1.out'
+        }, '-=0.25');
+      }
+
+      if (sunNode) {
+        tl.fromTo(sunNode,
+          { opacity: 0, scale: 0.5, transformOrigin: '180px 280px' },
+          { opacity: 1, scale: 1.0, duration: 0.45, ease: 'back.out(1.5)' },
+          '-=0.3'
+        );
+      }
+
+      // Step C: Vertical Altitude Arc from horizon up to crescent moon position (+4° 48' 20")
+      if (altitudePath) {
+        tl.to(altitudePath, {
+          strokeDashoffset: 0,
+          duration: 0.7,
+          ease: 'power2.out'
+        }, '-=0.15');
+      }
+
+      // Step D: Crescent Moon celestial node reveal
+      if (moonNode) {
+        tl.fromTo(moonNode,
+          { opacity: 0, scale: 0.4, transformOrigin: '380px 140px' },
+          { opacity: 1, scale: 1.0, duration: 0.5, ease: 'back.out(1.6)' },
+          '-=0.3'
+        );
+      }
+
+      // Step E: Great-Circle Elongation Arc connecting Sun to Moon (Elongasi 8.24° >= 6.4°)
+      if (elongationPath) {
+        tl.to(elongationPath, {
+          strokeDashoffset: 0,
+          duration: 0.85,
+          ease: 'power2.out'
+        }, '-=0.2');
+      }
+
+      // Step F: MABIMS 3° minimum altitude threshold guide
+      if (thresholdPath) {
+        tl.to(thresholdPath, {
+          strokeDashoffset: 0,
+          duration: 0.45,
+          ease: 'power1.out'
+        }, '-=0.25');
+      }
+
+      // Step G: Staggered Appearance of Astronomical Labels
       tl.from(
         labels,
         {
-          opacity: 0.6,
-          y: 4,
-          duration: 0.5,
-          stagger: 0.06,
+          opacity: 0,
+          y: 6,
+          duration: 0.45,
+          stagger: 0.05,
           ease: 'power2.out'
         },
-        '-=0.4'
+        '-=0.35'
       );
+
+      // Subtle live orbital breathing animation on the Sun's corona
+      if (sunCorona) {
+        coronaTween = gsap.to(sunCorona, {
+          scale: 1.25,
+          opacity: 0.6,
+          transformOrigin: '180px 280px',
+          duration: 2.2,
+          repeat: -1,
+          yoyo: true,
+          ease: 'sine.inOut'
+        });
+      }
     }, container);
   }
 
-  // Interactive parameter highlighting
+  // 2. Interactive Parameter Spotlight & Criteria Card Synchronization
+  const svgEl = svg;
   function highlightParameter(index: number): void {
-    // Parameter 1: Altitude (Tinggi Hilal >= 3°) -> path index 2 & box index 4
-    // Parameter 2: Elongation (Elongasi >= 6.4°) -> path index 3
-    // Parameter 3: Telemetry (All coordinates)
-    const altitudePath = svg?.querySelector('.path-altitude');
-    const elongationPath = svg?.querySelector('.path-elongation');
-    const horizonPath = svg?.querySelector('.path-horizon');
-    const thresholdPath = svg?.querySelector('.path-threshold');
-    const altitudeLabel = svg?.querySelector('.label-altitude');
-    const elongationLabel = svg?.querySelector('.label-elongation');
-
-    // Reset styles
-    svg?.querySelectorAll('.draw-path').forEach(p => {
+    if (!svgEl) return;
+    // Reset all paths and labels to baseline state
+    paths.forEach(p => {
       (p as SVGElement).style.filter = '';
-      (p as SVGElement).style.opacity = '0.75';
+      (p as SVGElement).style.opacity = '0.45';
+      (p as SVGElement).style.strokeWidth = '';
     });
 
+    labels.forEach(l => {
+      (l as SVGElement).style.opacity = '0.55';
+    });
+
+    if (horizonPath) (horizonPath as SVGElement).style.opacity = '0.75';
+
     if (index === 0) {
-      // Tinggi Hilal
+      // PARAMETER 01: Tinggi Hilal Hakiki (>= 3.0° MABIMS)
       if (altitudePath) {
         (altitudePath as SVGElement).style.opacity = '1';
-        (altitudePath as SVGElement).style.filter = 'drop-shadow(0 0 6px rgba(169, 130, 74, 0.9))';
+        (altitudePath as SVGElement).style.strokeWidth = '2.8';
+        (altitudePath as SVGElement).style.filter = 'drop-shadow(0 0 8px rgba(169, 130, 74, 0.95))';
       }
       if (thresholdPath) {
         (thresholdPath as SVGElement).style.opacity = '1';
+        (thresholdPath as SVGElement).style.strokeWidth = '2.0';
+        (thresholdPath as SVGElement).style.filter = 'drop-shadow(0 0 6px rgba(74, 222, 128, 0.8))';
       }
+      if (moonNode) (moonNode as SVGElement).style.opacity = '1';
       if (altitudeLabel) {
-        gsap.fromTo(altitudeLabel, { scale: 1.15 }, { scale: 1.0, duration: 0.35 });
+        (altitudeLabel as SVGElement).style.opacity = '1';
+        gsap.fromTo(altitudeLabel, { scale: 1.18, transformOrigin: 'left center' }, { scale: 1.0, duration: 0.35, ease: 'back.out(2)' });
       }
+      svgEl.querySelectorAll('.label-mabims, .label-moon-pos').forEach(el => {
+        (el as SVGElement).style.opacity = '1';
+      });
     } else if (index === 1) {
-      // Elongasi
+      // PARAMETER 02: Sudut Elongasi Busur (>= 6.4° MABIMS)
       if (elongationPath) {
         (elongationPath as SVGElement).style.opacity = '1';
-        (elongationPath as SVGElement).style.filter = 'drop-shadow(0 0 8px rgba(229, 169, 59, 0.95))';
+        (elongationPath as SVGElement).style.strokeWidth = '3.5';
+        (elongationPath as SVGElement).style.filter = 'drop-shadow(0 0 10px rgba(229, 169, 59, 0.98))';
       }
+      if (sunNode) (sunNode as SVGElement).style.opacity = '1';
+      if (moonNode) (moonNode as SVGElement).style.opacity = '1';
       if (elongationLabel) {
-        gsap.fromTo(elongationLabel, { scale: 1.15 }, { scale: 1.0, duration: 0.35 });
+        (elongationLabel as SVGElement).style.opacity = '1';
+        gsap.fromTo(elongationLabel, { scale: 1.18, transformOrigin: 'center center' }, { scale: 1.0, duration: 0.35, ease: 'back.out(2)' });
       }
     } else {
-      // All
-      if (horizonPath) (horizonPath as SVGElement).style.opacity = '1';
-      if (altitudePath) (altitudePath as SVGElement).style.opacity = '1';
-      if (elongationPath) (elongationPath as SVGElement).style.opacity = '1';
+      // PARAMETER 03: Telemetri Dual & Waktu Kalender
+      paths.forEach(p => {
+        (p as SVGElement).style.opacity = '1';
+      });
+      labels.forEach(l => {
+        (l as SVGElement).style.opacity = '1';
+      });
+      if (sunNode) (sunNode as SVGElement).style.opacity = '1';
+      if (moonNode) (moonNode as SVGElement).style.opacity = '1';
     }
 
-    // Toggle active state on criteria cards
+    // Toggle active state and accessibility attributes on criteria cards
     criteriaItems.forEach((item, idx) => {
-      item.classList.toggle('active', idx === index);
+      const isSelected = idx === index;
+      item.classList.toggle('active', isSelected);
+      item.setAttribute('aria-selected', isSelected ? 'true' : 'false');
     });
   }
 
-  // Bind click/hover on criteria cards to spotlight corresponding diagram path
+  // Bind mouse, touch, and keyboard interactions on criteria cards
   criteriaItems.forEach((item, idx) => {
+    item.setAttribute('tabindex', '0');
+    item.setAttribute('role', 'button');
+    item.setAttribute('aria-selected', idx === 0 ? 'true' : 'false');
+
+    // Hover spotlight (desktop pointer)
     item.addEventListener('mouseenter', () => highlightParameter(idx));
+
+    // Click / Tap spotlight (desktop and mobile)
     item.addEventListener('click', () => highlightParameter(idx));
+
+    // Keyboard navigation: Enter & Space keys
+    item.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        highlightParameter(idx);
+      }
+    });
   });
+
+  // Synchronize with WCAG 2.2.2 Motion Pause/Resume Toggle
+  const onMotionToggle = (e: CustomEvent<{ paused: boolean }>) => {
+    isPaused = e.detail.paused;
+    if (coronaTween) {
+      if (isPaused) {
+        coronaTween.pause();
+      } else {
+        coronaTween.play();
+      }
+    }
+  };
+  window.addEventListener('sabit-motion-toggle', onMotionToggle as EventListener);
 
   return {
     highlightParameter,
     destroy: () => {
+      window.removeEventListener('sabit-motion-toggle', onMotionToggle as EventListener);
+      coronaTween?.kill();
       ctx?.revert();
     }
   };

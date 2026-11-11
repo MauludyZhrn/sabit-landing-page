@@ -5,11 +5,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sabit — Presisi Terotomasi untuk Observasi Hilal</title>
   <meta name="description" content="Aplikasi desktop native berbasis C++20 dan Qt 6 untuk observasi hilal, kalkulasi ephemeris astronomi, akusisi kamera astrofotografi, dan evaluasi kriteria MABIMS.">
+  <link rel="canonical" href="https://sabit-landing-page.vercel.app/">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sabit-landing-page.vercel.app/">
+  <meta property="og:title" content="Sabit — Presisi Terotomasi untuk Observasi Hilal">
+  <meta property="og:description" content="Aplikasi desktop native berbasis C++20 dan Qt 6 untuk observasi hilal, kalkulasi ephemeris astronomi, akusisi kamera astrofotografi, dan evaluasi kriteria MABIMS.">
+  <meta property="og:image" content="https://sabit-landing-page.vercel.app/assets/logo/apple-touch-icon.png">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://sabit-landing-page.vercel.app/">
+  <meta name="twitter:title" content="Sabit — Presisi Terotomasi untuk Observasi Hilal">
+  <meta name="twitter:description" content="Aplikasi desktop native berbasis C++20 dan Qt 6 untuk observasi hilal, kalkulasi ephemeris astronomi, akusisi kamera astrofotografi, dan evaluasi kriteria MABIMS.">
+  <meta name="twitter:image" content="https://sabit-landing-page.vercel.app/assets/logo/apple-touch-icon.png">
+
+  <!-- Favicons -->
   <link rel="icon" type="image/svg+xml" href="/assets/logo/favicon.svg">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="icon" type="image/x-icon" href="/assets/logo/sabit-icon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/logo/apple-touch-icon.png">
   <link rel="stylesheet" href="/src/styles.css">
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Sabit",
+    "operatingSystem": "Windows 10, Windows 11 (x64)",
+    "applicationCategory": "AstronomyApplication",
+    "description": "Aplikasi desktop native berbasis C++20 dan Qt 6 untuk observasi hilal, kalkulasi ephemeris astronomi, akusisi kamera astrofotografi, dan evaluasi kriteria MABIMS.",
+    "downloadUrl": "https://sabit-landing-page.vercel.app/downloads/Sabit-Setup-v1.0.0-x64.exe",
+    "softwareVersion": "1.0.0"
+  }
+  </script>
 </head>
 <body>
   <!-- =======================================================================
@@ -19,7 +50,7 @@
     <div id="scroll-progress-bar" class="scroll-progress-bar" aria-hidden="true"></div>
     <div class="container header-inner">
       <a href="#" class="brand-lockup" aria-label="Sabit Beranda">
-        <img src="/assets/logo/lockup-horizontal-light.svg" alt="Sabit Logo" class="brand-logo-img" width="144" height="46">
+        <img src="/assets/logo/lockup-horizontal-light.svg" alt="Sabit Logo" class="brand-logo-img" width="144" height="46" decoding="async">
         <span class="brand-version-badge">v1.0.0 Basic</span>
       </a>
 
@@ -71,7 +102,7 @@
     <div class="mobile-nav-content" role="dialog" aria-modal="true" aria-label="Menu Navigasi Mobile">
       <div class="mobile-nav-header">
         <div class="brand-lockup">
-          <img src="/assets/logo/lockup-horizontal-light.svg" alt="Sabit Logo" class="brand-logo-img" width="124" height="40">
+          <img src="/assets/logo/lockup-horizontal-light.svg" alt="Sabit Logo" class="brand-logo-img" width="124" height="40" loading="lazy" decoding="async">
         </div>
         <button id="mobile-nav-close" class="mobile-nav-close" type="button" aria-label="Tutup menu navigasi">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -134,16 +165,16 @@
               <span>Unduh Installer Windows (.exe)</span>
             </a>
 
-            <!-- 2. GitHub Source Code Repository -->
-            <a href="https://github.com/MauludyZhrn/Sabit" data-action="github-repo" class="btn-secondary-dark">
+            <!-- 2. GitHub Source Code Repository (Secondary CTA) -->
+            <a href="https://github.com/MauludyZhrn/Sabit" target="_blank" rel="noopener noreferrer" data-action="github-repo" class="btn-secondary-dark">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
               </svg>
-              <span>Lihat Source Code</span>
+              <span>Lihat Source Code Sabit</span>
             </a>
 
-            <!-- 3. Workflow Anchor Link -->
-            <a href="#workflow" class="btn-secondary-dark">
+            <!-- 3. Workflow Anchor Link (Tertiary Action) -->
+            <a href="#workflow" class="hero-action-tertiary">
               <span>Pelajari Alur Kerja</span>
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <polyline points="9 18 15 12 9 6"></polyline>
@@ -267,9 +298,9 @@
               <path class="draw-path path-sun" d="M 180 280 L 180 320" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="4 4"></path>
 
               <!-- Sun Position (Ghurub di ufuk, Alt: 0°) -->
-              <g class="diag-node">
+              <g class="diag-node diag-node-sun">
                 <circle cx="180" cy="280" r="10" fill="#F59E0B" opacity="0.85"></circle>
-                <circle cx="180" cy="280" r="18" fill="none" stroke="#F59E0B" stroke-width="1" opacity="0.3"></circle>
+                <circle cx="180" cy="280" r="18" fill="none" stroke="#F59E0B" stroke-width="1" opacity="0.3" class="sun-corona"></circle>
               </g>
 
               <!-- Line 3: Moon Position Path & Altitude Arc (Tinggi Bulan >= 3°) -->
@@ -279,7 +310,7 @@
               <path class="draw-path path-elongation" d="M 180 280 Q 270 190 380 140" stroke="#C49B5B" stroke-width="2.5"></path>
 
               <!-- Crescent Moon Node -->
-              <g class="diag-node">
+              <g class="diag-node diag-node-moon">
                 <circle cx="380" cy="140" r="12" fill="#E2E8F0"></circle>
                 <circle cx="384" cy="138" r="10" fill="#0F1823"></circle>
               </g>
@@ -291,11 +322,11 @@
               <text x="50" y="272" fill="#8E9BA6" font-family="var(--font-mono)" font-size="11" class="diag-label">UFUK PENGAMAT (0° ALT)</text>
               <text x="140" y="315" fill="#F59E0B" font-family="var(--font-mono)" font-size="11" class="diag-label">Matahari (Ghurub)</text>
 
-              <text x="395" y="135" fill="#E2E8F0" font-family="var(--font-mono)" font-size="12" font-weight="600" class="diag-label">Posisi Hilal</text>
-              <text x="395" y="152" fill="#9EACB8" font-family="var(--font-mono)" font-size="10" class="diag-label">Alt: +4° 48' 20" | Az: 239.7°</text>
+              <text x="395" y="135" fill="#E2E8F0" font-family="var(--font-mono)" font-size="12" font-weight="600" class="diag-label label-moon-pos">Posisi Hilal</text>
+              <text x="395" y="152" fill="#9EACB8" font-family="var(--font-mono)" font-size="10" class="diag-label label-moon-coords">Alt: +4° 48' 20" | Az: 239.7°</text>
 
               <text x="250" y="195" fill="#C49B5B" font-family="var(--font-mono)" font-size="11" font-weight="600" class="diag-label label-elongation">Elongasi: 8.24° (&ge; 6.4°)</text>
-              <text x="390" y="215" fill="#4ADE80" font-family="var(--font-mono)" font-size="10" class="diag-label">Batas MABIMS 3°</text>
+              <text x="390" y="215" fill="#4ADE80" font-family="var(--font-mono)" font-size="10" class="diag-label label-mabims">Batas MABIMS 3°</text>
               <text x="320" y="250" fill="#A9824A" font-family="var(--font-mono)" font-size="11" class="diag-label label-altitude">Tinggi Hilal (&ge; 3.0°)</text>
             </svg>
           </div>
@@ -371,7 +402,7 @@
         </div>
 
         <div class="inspector-cards-grid" role="region" aria-label="Penjelasan Komponen Antarmuka Sabit">
-          <article id="card-histogram" class="inspector-card active" tabindex="0">
+          <article id="card-histogram" class="inspector-card active" tabindex="0" role="button" aria-selected="true" aria-label="Subsistem 1: Live Histogram & Kurva Kontras">
             <span class="card-num">1</span>
             <h3>Live Histogram &amp; Kurva Kontras</h3>
             <p>
@@ -379,7 +410,7 @@
             </p>
           </article>
 
-          <article id="card-ephemeris" class="inspector-card" tabindex="0">
+          <article id="card-ephemeris" class="inspector-card" tabindex="0" role="button" aria-selected="false" aria-label="Subsistem 2: Astronomy & Ephemeris Box">
             <span class="card-num">2</span>
             <h3>Astronomy &amp; Ephemeris Box</h3>
             <p>
@@ -387,7 +418,7 @@
             </p>
           </article>
 
-          <article id="card-camera" class="inspector-card" tabindex="0">
+          <article id="card-camera" class="inspector-card" tabindex="0" role="button" aria-selected="false" aria-label="Subsistem 3: Camera & Exposure Engine">
             <span class="card-num">3</span>
             <h3>Camera &amp; Exposure Engine</h3>
             <p>
@@ -395,7 +426,7 @@
             </p>
           </article>
 
-          <article id="card-toolbar" class="inspector-card" tabindex="0">
+          <article id="card-toolbar" class="inspector-card" tabindex="0" role="button" aria-selected="false" aria-label="Subsistem 4: Toolbar Akusisi & Format .FITS">
             <span class="card-num">4</span>
             <h3>Toolbar Akusisi &amp; Format .FITS</h3>
             <p>
@@ -403,7 +434,7 @@
             </p>
           </article>
 
-          <article id="card-telemetry" class="inspector-card" tabindex="0">
+          <article id="card-telemetry" class="inspector-card" tabindex="0" role="button" aria-selected="false" aria-label="Subsistem 5: Status Bar & Sensor AI">
             <span class="card-num">5</span>
             <h3>Status Bar &amp; Sensor AI</h3>
             <p>
@@ -428,12 +459,23 @@
         </div>
 
         <div class="workflow-timeline">
+          <!-- Desktop Horizontal Progress Track & Nodes -->
+          <div class="workflow-desktop-track" aria-hidden="true">
+            <div class="workflow-desktop-fill"></div>
+            <div class="workflow-desktop-nodes">
+              <span class="workflow-node node-1 active"></span>
+              <span class="workflow-node node-2"></span>
+              <span class="workflow-node node-3"></span>
+              <span class="workflow-node node-4"></span>
+            </div>
+          </div>
+
           <!-- Animated Vertical Progress Connecting Track -->
           <div class="workflow-progress-track" aria-hidden="true">
             <div class="workflow-progress-fill"></div>
           </div>
 
-          <article class="workflow-step active">
+          <article class="workflow-step active" data-step="1">
             <div class="step-num">TAHAP 01</div>
             <h3 class="step-title">Kalibrasi Lokasi &amp; Ephemeris</h3>
             <p class="step-desc">
@@ -441,7 +483,7 @@
             </p>
           </article>
 
-          <article class="workflow-step">
+          <article class="workflow-step" data-step="2">
             <div class="step-num">TAHAP 02</div>
             <h3 class="step-title">Koneksi &amp; Konfigurasi Sensor</h3>
             <p class="step-desc">
@@ -449,7 +491,7 @@
             </p>
           </article>
 
-          <article class="workflow-step">
+          <article class="workflow-step" data-step="3">
             <div class="step-num">TAHAP 03</div>
             <h3 class="step-title">Akusisi Citra &amp; Histogram</h3>
             <p class="step-desc">
@@ -457,7 +499,7 @@
             </p>
           </article>
 
-          <article class="workflow-step">
+          <article class="workflow-step" data-step="4">
             <div class="step-num">TAHAP 04</div>
             <h3 class="step-title">Evaluasi Visibilitas MABIMS</h3>
             <p class="step-desc">
@@ -497,6 +539,27 @@
             <div style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-hero-muted);">
               Arsitektur: Native C++20 • Qt 6.x Widgets • ONNX Runtime Inference
             </div>
+          </div>
+
+          <!-- Branching SVG Timeline Connector -->
+          <div class="roadmap-connector-wrap" aria-hidden="true">
+            <svg class="roadmap-connector-svg" viewBox="0 0 1000 48" preserveAspectRatio="none">
+              <!-- Central Stem from Baseline -->
+              <line x1="500" y1="0" x2="500" y2="24" class="roadmap-stem-line"></line>
+              <!-- Horizontal Distribution Spine -->
+              <line x1="125" y1="24" x2="875" y2="24" class="roadmap-spine-line"></line>
+              <!-- Branch Drops to Each Area Card -->
+              <line x1="125" y1="24" x2="125" y2="48" class="roadmap-branch-line branch-1"></line>
+              <line x1="375" y1="24" x2="375" y2="48" class="roadmap-branch-line branch-2"></line>
+              <line x1="625" y1="24" x2="625" y2="48" class="roadmap-branch-line branch-3"></line>
+              <line x1="875" y1="24" x2="875" y2="48" class="roadmap-branch-line branch-4"></line>
+              <!-- Junction Nodes -->
+              <circle cx="500" cy="24" r="4" class="roadmap-node-circle stem-node"></circle>
+              <circle cx="125" cy="48" r="3.5" class="roadmap-node-circle node-1"></circle>
+              <circle cx="375" cy="48" r="3.5" class="roadmap-node-circle node-2"></circle>
+              <circle cx="625" cy="48" r="3.5" class="roadmap-node-circle node-3"></circle>
+              <circle cx="875" cy="48" r="3.5" class="roadmap-node-circle node-4"></circle>
+            </svg>
           </div>
 
           <!-- Roadmap Grid: Potential Exploration Areas -->
@@ -716,7 +779,7 @@
       <div class="footer-top">
         <div style="max-width: 400px;">
           <a href="#" class="brand-lockup" aria-label="Sabit Beranda" style="display: inline-flex; margin-bottom: 16px;">
-            <img src="/assets/logo/lockup-horizontal-light.svg" alt="Sabit Logo" class="brand-logo-img" width="150" height="48">
+            <img src="/assets/logo/lockup-horizontal-light.svg" alt="Sabit Logo" class="brand-logo-img" width="150" height="48" loading="lazy" decoding="async">
           </a>
           <p style="color: var(--text-hero-muted); font-size: 0.84rem; line-height: 1.6;">
             Sabit merupakan perangkat lunak analisis citra dan observasi astronomis hilal berbasis C++20 dan Qt 6 yang dikembangkan untuk tujuan penelitian ilmiah dan pembuktian hisab rukyat objektif.
