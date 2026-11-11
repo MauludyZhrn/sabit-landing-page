@@ -80,7 +80,8 @@ def capture_all():
         edge_bin,
         "--headless=new",
         "--no-sandbox",
-        "--disable-gpu",
+        "--enable-webgl",
+        "--ignore-gpu-blocklist",
         f"--remote-debugging-port={debug_port}",
         "about:blank"
     ]
@@ -88,11 +89,14 @@ def capture_all():
     time.sleep(2)
 
     viewports = [
-        ("desktop_1440", 1440, 900, False),
-        ("desktop_1024", 1024, 768, False),
-        ("tablet_768", 768, 1024, True),
+        ("mobile_360", 360, 780, True),
         ("mobile_390", 390, 844, True),
-        ("mobile_360", 360, 780, True)
+        ("mobile_430", 430, 932, True),
+        ("tablet_768", 768, 1024, True),
+        ("desktop_1024", 1024, 768, False),
+        ("desktop_1366", 1366, 768, False),
+        ("desktop_1440", 1440, 900, False),
+        ("desktop_1920", 1920, 1080, False)
     ]
 
     try:

@@ -75,7 +75,7 @@ export function initMotionSystem(): MotionSystemController {
         .from('.hero-eyebrow', { opacity: 0.3, y: -10, duration: MOTION_TOKENS.durFast })
         .from('.hero-title', { opacity: 0.3, y: 18, duration: MOTION_TOKENS.durStandard }, '-=0.2')
         .from('.hero-lead', { opacity: 0.3, y: 12, duration: MOTION_TOKENS.durStandard }, '-=0.3')
-        .from('.hero-actions .btn-primary, .hero-actions .btn-secondary-dark', {
+        .from('.hero-actions .btn-primary, .hero-actions .btn-secondary-dark, .hero-actions .hero-action-tertiary', {
           opacity: 0.4,
           y: 10,
           duration: MOTION_TOKENS.durFast,

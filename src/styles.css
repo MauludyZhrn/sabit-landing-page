@@ -540,7 +540,7 @@ body.drawer-locked {
 }
 
 .hero-content {
-  max-width: 630px;
+  max-width: 680px;
 }
 
 .hero-eyebrow {
@@ -577,9 +577,42 @@ body.drawer-locked {
 
 .hero-actions {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
-  gap: var(--space-sm);
+  gap: var(--space-md);
   margin-bottom: var(--space-2xl);
+}
+
+.hero-actions .btn-primary,
+.hero-actions .btn-secondary-dark {
+  white-space: nowrap;
+}
+
+.hero-action-tertiary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-hero-secondary);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  text-decoration: none;
+  transition: color var(--dur-fast) ease, transform var(--dur-fast) ease;
+}
+
+.hero-action-tertiary:hover {
+  color: var(--accent-brass);
+  transform: translateX(2px);
+}
+
+.hero-action-tertiary svg {
+  transition: transform var(--dur-fast) ease;
+}
+
+.hero-action-tertiary:hover svg {
+  transform: translateX(3px);
 }
 
 /* Verified Badges Floating Capsule */
@@ -1482,23 +1515,54 @@ html.motion-paused .diag-node {
 }
 
 /* ==========================================================================
-   RESPONSIVE BREAKPOINTS (1024px, 768px, 480px)
+   RESPONSIVE BREAKPOINTS (1140px, 1024px, 768px, 480px)
    ========================================================================== */
 
+/* Dedicated Compact Navigation Breakpoint (1140px and below) */
+@media (max-width: 1140px) {
+  .site-nav {
+    display: none !important;
+  }
+
+  .mobile-menu-toggle {
+    display: flex !important;
+  }
+
+  .header-actions {
+    gap: var(--space-sm);
+  }
+
+  .motion-toggle-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .header-download-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .brand-lockup {
+    gap: 12px;
+  }
+
+  .brand-logo-img {
+    height: 32px;
+  }
+
+  .brand-version-badge {
+    padding: 3px 8px;
+    font-size: 0.70rem;
+    white-space: nowrap;
+  }
+
+  .header-inner {
+    justify-content: space-between;
+  }
+}
+
+/* Tablet Landscape & Compact Desktop (1024px) */
 @media (max-width: 1024px) {
-  .hero-grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-2xl);
-  }
-
-  .hero-content {
-    max-width: 100%;
-  }
-
-  .hero-visual-stage {
-    min-height: 420px;
-  }
-
   .geometry-grid {
     grid-template-columns: 1fr;
   }
@@ -1512,13 +1576,96 @@ html.motion-paused .diag-node {
   }
 }
 
-@media (max-width: 768px) {
-  .container {
-    padding-inline: 14px;
+/* Tablet Viewports: Balanced 2-Column Hero (768px to 1140px) */
+@media (min-width: 768px) and (max-width: 1140px) {
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: var(--space-xl);
+    align-items: center;
   }
 
-  .site-nav {
-    display: none;
+  .hero-content {
+    max-width: 100%;
+  }
+
+  .hero-title {
+    font-size: clamp(2.0rem, 3.2vw, 2.7rem);
+    line-height: 1.16;
+    margin-bottom: var(--space-sm);
+  }
+
+  .hero-lead {
+    font-size: 0.96rem;
+    line-height: 1.55;
+    margin-bottom: var(--space-lg);
+  }
+
+  .hero-actions {
+    gap: 12px;
+    margin-bottom: var(--space-lg);
+  }
+
+  .hero-actions .btn-primary {
+    padding: 10px 18px;
+    font-size: 0.88rem;
+  }
+
+  .hero-actions .btn-secondary-dark {
+    padding: 9px 16px;
+    font-size: 0.86rem;
+  }
+
+  .hero-action-tertiary {
+    padding: 6px 10px;
+    font-size: 0.84rem;
+  }
+
+  .hero-badges-capsule {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .hero-visual-stage {
+    min-height: 380px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0;
+  }
+
+  .moon-viewport {
+    max-width: 320px;
+    height: 320px;
+    margin-inline: auto;
+  }
+
+  .moon-coords-pill {
+    top: 2%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.64rem;
+    padding: 3px 8px;
+    white-space: nowrap;
+  }
+
+  .moon-caption-tag {
+    bottom: 2%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.62rem;
+    padding: 3px 10px;
+    white-space: nowrap;
+    max-width: 90%;
+  }
+}
+
+/* Mobile Viewports (Below 768px: 360px, 390px, 430px) */
+@media (max-width: 767px) {
+  .container {
+    padding-inline: 16px;
   }
 
   .brand-logo-img {
@@ -1538,15 +1685,11 @@ html.motion-paused .diag-node {
   }
 
   .motion-toggle-btn {
-    padding: 5px;
-    width: 32px;
-    height: 32px;
+    padding: 6px;
+    width: 34px;
+    height: 34px;
     justify-content: center;
     flex-shrink: 0;
-  }
-
-  .nav-links {
-    display: none;
   }
 
   .header-download-btn {
@@ -1555,10 +1698,65 @@ html.motion-paused .diag-node {
 
   .mobile-menu-toggle {
     display: flex !important;
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     padding: 6px;
     flex-shrink: 0;
+  }
+
+  .hero-section {
+    padding-top: var(--space-lg);
+    padding-bottom: var(--space-2xl);
+  }
+
+  /* Subdue background orbit canvas on mobile so text remains prominent */
+  .orbital-hero-canvas {
+    opacity: 0.35;
+  }
+
+  /* Seamless mobile composition: Headline -> 3D Moon -> Lead -> CTAs -> Badges */
+  .hero-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .hero-content {
+    display: contents;
+  }
+
+  .hero-eyebrow {
+    order: 1;
+    font-size: 0.68rem;
+    margin-bottom: 8px;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .hero-title {
+    order: 2;
+    font-size: clamp(1.60rem, 5.8vw, 1.85rem);
+    line-height: 1.18;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  /* 3D Moon immediately visible within the initial mobile viewport */
+  .hero-visual-stage {
+    order: 3;
+    width: 100%;
+    min-height: 240px;
+    margin-block: 4px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .moon-viewport {
+    max-width: 220px;
+    height: 220px;
+    margin-inline: auto;
   }
 
   .moon-telemetry-pill {
@@ -1566,38 +1764,76 @@ html.motion-paused .diag-node {
   }
 
   .moon-coords-pill {
-    top: 2%;
+    top: 0;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 0.62rem;
-    padding: 3px 10px;
+    font-size: 0.58rem;
+    padding: 2px 8px;
     white-space: nowrap;
   }
 
-  .hero-section {
-    padding-top: var(--space-2xl);
-    padding-bottom: var(--space-2xl);
+  .moon-caption-tag {
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.58rem;
+    padding: 2px 8px;
+    white-space: nowrap;
+    max-width: 95%;
   }
 
-  .hero-title {
-    font-size: 2.1rem;
+  .hero-lead {
+    order: 4;
+    font-size: 0.88rem;
+    line-height: 1.48;
+    text-align: center;
+    max-width: 380px;
+    margin-bottom: 14px;
   }
 
   .hero-actions {
-    flex-direction: column;
-    gap: 10px;
+    order: 5;
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 14px;
   }
 
-  .hero-actions .btn-primary,
+  .hero-actions .btn-primary {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 14px;
+    font-size: 0.86rem;
+  }
+
   .hero-actions .btn-secondary-dark {
     width: 100%;
     justify-content: center;
+    padding: 9px 14px;
+    font-size: 0.84rem;
+  }
+
+  .hero-action-tertiary {
+    justify-content: center;
+    font-size: 0.82rem;
+    padding: 4px 10px;
   }
 
   .hero-badges-capsule {
-    flex-direction: column;
-    gap: 8px;
+    order: 6;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+  }
+
+  .badge-item {
+    font-size: 0.70rem;
+    gap: 6px;
   }
 
   .workflow-timeline {
@@ -1631,73 +1867,6 @@ html.motion-paused .diag-node {
   .footer-top {
     flex-direction: column;
     gap: var(--space-xl);
-  }
-}
-
-/* Small Mobile Viewports (360px – 480px) */
-@media (max-width: 480px) {
-  .container {
-    padding-inline: 16px;
-  }
-
-  /* Compact icon-only motion toggle button on small mobile */
-  #motion-status-text {
-    display: none;
-  }
-
-  .motion-toggle-btn {
-    padding: 7px;
-    width: 36px;
-    height: 36px;
-    justify-content: center;
-  }
-
-  .hero-title {
-    font-size: 1.80rem;
-    line-height: 1.20;
-  }
-
-  .hero-lead {
-    font-size: 0.92rem;
-  }
-
-  .hero-actions {
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
-  }
-
-  .hero-actions .btn-primary,
-  .hero-actions .btn-secondary-dark {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .hero-visual-stage {
-    min-height: 320px;
-  }
-
-  .moon-viewport {
-    max-width: 310px;
-  }
-
-  .moon-telemetry-pill {
-    display: none;
-  }
-
-  .moon-coords-pill {
-    font-size: 0.62rem;
-    padding: 3px 8px;
-    top: 2%;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: auto;
-  }
-
-  .moon-caption-tag {
-    font-size: 0.60rem;
-    padding: 3px 8px;
-    bottom: 2%;
   }
 
   .screenshot-stage {

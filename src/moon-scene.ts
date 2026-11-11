@@ -234,6 +234,7 @@ export class MoonScene {
       this.intersectionObserver.observe(this.container);
 
       this.startLoop();
+      (window as any).__sabitMoonDiagnostics = () => this.getDiagnostics();
     } catch (err) {
       console.error('Three.js initialization failed:', err);
       this.showFallback();
@@ -397,6 +398,43 @@ export class MoonScene {
     const latStr = `${degX >= 0 ? '+' : ''}${degX.toFixed(1)}°`;
 
     this.coordsElement.textContent = `SUB-OBS: ${latStr} ${lonStr} • TERM: 71.8°`;
+  }
+
+  public getDiagnostics() {
+    const gl = this.renderer?.getContext();
+    let unmaskedVendor = 'unknown';
+    let unmaskedRenderer = 'unknown';
+    if (gl) {
+      const ext = gl.getExtension('WEBGL_debug_renderer_info');
+      if (ext) {
+        unmaskedVendor = gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) || 'unknown';
+        unmaskedRenderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || 'unknown';
+      }
+    }
+    let centerLuminance = 0;
+    if (this.renderer && this.scene && this.camera && this.moonMesh && gl) {
+      this.renderer.render(this.scene, this.camera);
+      const px = new Uint8Array(4);
+      const midX = Math.floor(gl.drawingBufferWidth / 2);
+      const midY = Math.floor(gl.drawingBufferHeight / 2);
+      gl.readPixels(midX, midY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      centerLuminance = (px[0] + px[1] + px[2]) / 3;
+    }
+
+    return {
+      initialized: !!this.renderer,
+      isWebGL: !!gl,
+      webglVersion: gl && typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext ? 2 : (gl ? 1 : 0),
+      unmaskedVendor,
+      unmaskedRenderer,
+      isAnimating: this.reqId !== null,
+      isPaused: this.isPaused,
+      currentRotationY: this.currentRotationY,
+      hasAlbedoTexture: !!this.albedoTexture,
+      hasBumpTexture: !!this.bumpTexture,
+      centerLuminance,
+      glError: gl ? gl.getError() : null
+    };
   }
 
   public destroy(): void {
