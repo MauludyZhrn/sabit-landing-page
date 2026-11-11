@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 6. Smooth Anchor Scrolling with focus management
+  // 6. Smooth Anchor Scrolling with focus management and ScrollTrigger refresh
   document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', e => {
       const targetId = anchor.getAttribute('href');
@@ -111,6 +111,9 @@ document.addEventListener('DOMContentLoaded', () => {
         targetEl.scrollIntoView({ behavior: 'smooth' });
         targetEl.setAttribute('tabindex', '-1');
         (targetEl as HTMLElement).focus?.({ preventScroll: true });
+        setTimeout(() => {
+          ScrollTrigger.refresh();
+        }, 350);
       }
     });
   });

@@ -65,18 +65,17 @@ export function initAstronomyDiagram(container: HTMLElement): AstronomyDiagramCo
         );
       });
 
-      // Animate labels and nodes fade-in
-      tl.fromTo(
+      // Animate labels and nodes gentle entrance
+      tl.from(
         labels,
-        { opacity: 0, y: 6 },
         {
-          opacity: 1,
-          y: 0,
-          duration: 0.6,
-          stagger: 0.08,
+          opacity: 0.6,
+          y: 4,
+          duration: 0.5,
+          stagger: 0.06,
           ease: 'power2.out'
         },
-        '-=0.5'
+        '-=0.4'
       );
     }, container);
   }

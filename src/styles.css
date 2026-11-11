@@ -691,13 +691,12 @@ body.drawer-locked {
 /* Selenographic Live Coordinates Telemetry HUD */
 .moon-coords-pill {
   position: absolute;
-  bottom: 8%;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 8%;
+  left: 0%;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 14px;
+  padding: 6px 12px;
   font-family: var(--font-mono);
   font-size: 0.70rem;
   color: var(--accent-brass);
@@ -705,8 +704,8 @@ body.drawer-locked {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(229, 169, 59, 0.35);
-  border-radius: 999px;
-  letter-spacing: 0.08em;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.06em;
   white-space: nowrap;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   pointer-events: none;
@@ -715,7 +714,7 @@ body.drawer-locked {
 
 .moon-caption-tag {
   position: absolute;
-  bottom: 1.5%;
+  bottom: 2%;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -828,13 +827,14 @@ body.drawer-locked {
 }
 
 .diag-label, .diag-node {
-  opacity: 0;
-  transform: translateY(4px);
+  opacity: 1;
+  transform: none;
+  transition: opacity var(--dur-normal) ease, transform var(--dur-normal) ease;
 }
 
 .drawn .diag-label, .drawn .diag-node {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
 }
 
 .criteria-list {
@@ -1386,15 +1386,13 @@ body.drawer-locked {
    ========================================================================== */
 
 .reveal-group {
-  opacity: 0;
-  transform: translateY(16px);
-  transition: opacity var(--dur-reveal) var(--ease-restrained),
-              transform var(--dur-reveal) var(--ease-restrained);
+  opacity: 1;
+  transform: none;
 }
 
 .reveal-group.is-revealed {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
 }
 
 html.motion-paused .reveal-group {
@@ -1448,7 +1446,7 @@ html.motion-paused .diag-node {
 }
 
 /* ==========================================================================
-   RESPONSIVE BREAKPOINTS
+   RESPONSIVE BREAKPOINTS (1024px, 768px, 480px)
    ========================================================================== */
 
 @media (max-width: 1024px) {
@@ -1581,20 +1579,22 @@ html.motion-paused .diag-node {
   .moon-telemetry-pill {
     top: 2%;
     right: 0%;
-    font-size: 0.64rem;
-    padding: 4px 8px;
+    font-size: 0.60rem;
+    padding: 3px 6px;
   }
 
   .moon-coords-pill {
-    font-size: 0.62rem;
-    padding: 3px 8px;
-    bottom: 6%;
+    font-size: 0.58rem;
+    padding: 3px 6px;
+    top: 2%;
+    left: 0%;
+    bottom: auto;
   }
 
   .moon-caption-tag {
-    font-size: 0.62rem;
+    font-size: 0.60rem;
     padding: 3px 8px;
-    bottom: 0%;
+    bottom: 2%;
   }
 
   .screenshot-stage {
@@ -1608,5 +1608,11 @@ html.motion-paused .diag-node {
   .download-spec-table td {
     padding-block: 8px;
     font-size: 0.80rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .moon-telemetry-pill {
+    display: none;
   }
 }

@@ -40,14 +40,14 @@ export function initMotionSystem(): MotionSystemController {
       // A. Hero Staggered Entrance
       const heroTl = gsap.timeline({ defaults: { ease: 'power3.out' } });
       heroTl
-        .fromTo('.hero-eyebrow', { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.6, delay: 0.1 })
-        .fromTo('.hero-title', { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.8 }, '-=0.4')
-        .fromTo('.hero-lead', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.7 }, '-=0.5')
-        .fromTo('.hero-actions .btn-primary, .hero-actions .btn-secondary-dark', { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, stagger: 0.1 }, '-=0.4')
-        .fromTo('.hero-badges-capsule .badge-item', { opacity: 0, scale: 0.92, y: 8 }, { opacity: 1, scale: 1, y: 0, duration: 0.5, stagger: 0.08 }, '-=0.3')
-        .fromTo('.hero-visual-stage', { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1.0, duration: 1.1, ease: 'power2.out' }, '-=0.9');
+        .from('.hero-eyebrow', { opacity: 0, y: -10, duration: 0.5, delay: 0.05 })
+        .from('.hero-title', { opacity: 0, y: 20, duration: 0.7 }, '-=0.3')
+        .from('.hero-lead', { opacity: 0, y: 14, duration: 0.6 }, '-=0.4')
+        .from('.hero-actions .btn-primary, .hero-actions .btn-secondary-dark', { opacity: 0, y: 12, duration: 0.5, stagger: 0.08 }, '-=0.3')
+        .from('.hero-badges-capsule .badge-item', { opacity: 0, y: 8, duration: 0.45, stagger: 0.06 }, '-=0.25')
+        .from('.hero-visual-stage', { opacity: 0.8, scale: 0.96, duration: 0.9, ease: 'power2.out' }, '-=0.7');
 
-      // B. Hero Scroll Scrub (Parallax on Moon Stage & Background)
+      // B. Hero Scroll Scrub (Subtle Parallax on Moon Stage)
       gsap.to('.hero-visual-stage', {
         scrollTrigger: {
           trigger: '.hero-section',
@@ -55,26 +55,22 @@ export function initMotionSystem(): MotionSystemController {
           end: 'bottom top',
           scrub: 1.0
         },
-        y: 60,
-        opacity: 0.65,
+        y: 40,
         ease: 'none'
       });
 
-      // C. Application Showcase (Perspective Tilt & Clip-path reveal)
-      gsap.fromTo('.screenshot-stage', 
-        { clipPath: 'inset(10% 8% 10% 8% round 14px)', opacity: 0.7 },
-        {
-          clipPath: 'inset(0% 0% 0% 0% round 14px)',
-          opacity: 1,
-          duration: 1.0,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: '.screenshot-stage',
-            start: 'top 80%',
-            once: true
-          }
+      // C. Application Showcase (Gentle Entrance & 3D Tilt)
+      gsap.from('.screenshot-stage', {
+        opacity: 0.85,
+        y: 20,
+        duration: 0.7,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: '.screenshot-stage',
+          start: 'top 85%',
+          once: true
         }
-      );
+      });
 
       // Desktop 3D perspective mouse tilt on screenshot window
       initScreenshot3DTilt();
@@ -95,118 +91,87 @@ export function initMotionSystem(): MotionSystemController {
         }
       );
 
-      // Sequentially activate workflow steps
+      // Sequentially highlight active step (Cards remain 100% visible)
       const steps = gsap.utils.toArray<HTMLElement>('.workflow-step');
       steps.forEach((step) => {
-        gsap.fromTo(step,
-          { opacity: 0.35, y: 20 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.6,
-            scrollTrigger: {
-              trigger: step,
-              start: 'top 78%',
-              onEnter: () => step.classList.add('active'),
-              onLeaveBack: () => step.classList.remove('active')
-            }
-          }
-        );
+        ScrollTrigger.create({
+          trigger: step,
+          start: 'top 78%',
+          end: 'bottom 22%',
+          onEnter: () => step.classList.add('active'),
+          onEnterBack: () => step.classList.add('active'),
+          onLeave: () => step.classList.remove('active'),
+          onLeaveBack: () => step.classList.remove('active')
+        });
       });
 
       // E. Roadmap Section Progressive Reveal
-      gsap.fromTo('.roadmap-baseline-card',
-        { opacity: 0, y: 20 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.7,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: '.roadmap-timeline-box',
-            start: 'top 80%',
-            once: true
-          }
+      gsap.from('.roadmap-baseline-card', {
+        opacity: 0.8,
+        y: 16,
+        duration: 0.6,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: '.roadmap-timeline-box',
+          start: 'top 85%',
+          once: true
         }
-      );
+      });
 
-      gsap.fromTo('.roadmap-item-card',
-        { opacity: 0, y: 24 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.6,
-          stagger: 0.14,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: '.roadmap-grid',
-            start: 'top 80%',
-            once: true
-          }
+      gsap.from('.roadmap-item-card', {
+        opacity: 0.8,
+        y: 16,
+        duration: 0.5,
+        stagger: 0.1,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: '.roadmap-grid',
+          start: 'top 85%',
+          once: true
         }
-      );
+      });
 
       // F. Tech Features Progressive Reveal
-      gsap.fromTo('.tech-item',
-        { opacity: 0, x: -16 },
-        {
-          opacity: 1,
-          x: 0,
-          duration: 0.6,
-          stagger: 0.12,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: '.tech-feature-list',
-            start: 'top 80%',
-            once: true
-          }
+      gsap.from('.tech-item', {
+        opacity: 0.8,
+        x: -12,
+        duration: 0.5,
+        stagger: 0.08,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: '.tech-feature-list',
+          start: 'top 85%',
+          once: true
         }
-      );
+      });
     });
 
     // Tablet Viewport (768px – 1023px)
     mm.add('(min-width: 768px) and (max-width: 1023px)', () => {
-      gsap.fromTo('.hero-content > *',
-        { opacity: 0, y: 16 },
-        { opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: 'power2.out' }
-      );
-      gsap.fromTo('.workflow-step',
-        { opacity: 0, y: 16 },
-        {
-          opacity: 1,
-          y: 0,
-          stagger: 0.12,
-          duration: 0.5,
-          scrollTrigger: { trigger: '.workflow-timeline', start: 'top 80%', once: true }
-        }
-      );
+      gsap.from('.hero-content > *', {
+        opacity: 0.8,
+        y: 12,
+        duration: 0.5,
+        stagger: 0.08,
+        ease: 'power2.out'
+      });
     });
 
     // Mobile Viewport (360px – 767px)
     mm.add('(max-width: 767px)', () => {
-      // Lightweight entrance without heavy scrub or pinning
-      gsap.fromTo('.hero-content > *',
-        { opacity: 0, y: 12 },
-        { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: 'power2.out' }
-      );
-
-      const revealGroups = gsap.utils.toArray<HTMLElement>('.reveal-group');
-      revealGroups.forEach(group => {
-        gsap.fromTo(group,
-          { opacity: 0, y: 16 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.6,
-            ease: 'power2.out',
-            scrollTrigger: {
-              trigger: group,
-              start: 'top 88%',
-              once: true
-            }
-          }
-        );
+      // Instant, robust native scrolling without opacity gates
+      gsap.from('.hero-content > *', {
+        opacity: 0.8,
+        y: 10,
+        duration: 0.45,
+        stagger: 0.06,
+        ease: 'power2.out'
       });
+    });
+
+    // Refresh ScrollTrigger calculations after initial render and assets load
+    window.addEventListener('load', () => {
+      ScrollTrigger.refresh();
     });
   }
 
