@@ -1,6 +1,8 @@
 // Sabit 3D Moon Centerpiece — Three.js Implementation
 // Powered by official NASA CGI Moon Kit (LRO color map + LOLA elevation map)
-// Adheres strictly to sabit-web-design, MOTION-3D-BRIEF.md, and ANTIGRAVITY-REVISION-GUIDE.md
+// Features: Grazing key light (~72° terminator), crater displacement relief,
+// desktop mouse parallax, scroll-linked rotation scrub, live selenographic HUD telemetry,
+// and automatic static fallback crossfade.
 
 import * as THREE from 'three';
 
@@ -9,6 +11,7 @@ export interface MoonSceneOptions {
   albedoUrl?: string;
   bumpUrl?: string;
   posterElement?: HTMLElement | null;
+  coordsElement?: HTMLElement | null;
   onReady?: () => void;
   onError?: (err: Error) => void;
 }
@@ -16,6 +19,7 @@ export interface MoonSceneOptions {
 export class MoonScene {
   private container: HTMLElement;
   private posterElement: HTMLElement | null;
+  private coordsElement: HTMLElement | null;
   private renderer: THREE.WebGLRenderer | null = null;
   private scene: THREE.Scene | null = null;
   private camera: THREE.PerspectiveCamera | null = null;
@@ -35,15 +39,24 @@ export class MoonScene {
   // Interaction physics & orientation
   private isDragging = false;
   private previousMousePosition = { x: 0, y: 0 };
-  private targetRotationY = 0.20; // Selenographic near-side orientation facing observer
+  private targetRotationY = 0.20; // Selenographic near-side facing observer
   private targetRotationX = 0.04;
   private currentRotationY = 0.20;
   private currentRotationX = 0.04;
   private rotationVelocityY = 0;
   private rotationVelocityX = 0;
 
-  // Very slow natural axial rotation: ~150 seconds per full 360-degree turn
-  private baseRotationSpeed = 0.00040;
+  // Mouse Parallax on Desktop
+  private mouseParallaxX = 0;
+  private mouseParallaxY = 0;
+  private currentParallaxX = 0;
+  private currentParallaxY = 0;
+
+  // Scroll-linked rotation scrub
+  private scrollProgress = 0;
+
+  // Very slow natural axial rotation: ~150 seconds per full revolution
+  private baseRotationSpeed = 0.00035;
 
   private boundOnPointerDown: (e: PointerEvent) => void;
   private boundOnPointerMove: (e: PointerEvent) => void;
@@ -54,6 +67,7 @@ export class MoonScene {
   constructor(options: MoonSceneOptions) {
     this.container = options.container;
     this.posterElement = options.posterElement || null;
+    this.coordsElement = options.coordsElement || null;
 
     this.boundOnPointerDown = this.onPointerDown.bind(this);
     this.boundOnPointerMove = this.onPointerMove.bind(this);
@@ -124,23 +138,23 @@ export class MoonScene {
       this.renderer.setPixelRatio(maxDpr);
       this.renderer.setSize(width, height);
       this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      this.renderer.toneMappingExposure = 1.02;
+      this.renderer.toneMappingExposure = 1.05;
 
       this.container.appendChild(this.renderer.domElement);
 
-      // 4. Lighting:
-      // Directional Sun Light: Grazing angle (~72°) from top-right to create authentic terminator & crater relief
-      const sunLight = new THREE.DirectionalLight(0xfffdf6, 2.4);
-      sunLight.position.set(2.9, 1.15, 1.65);
+      // 4. Lighting Configuration:
+      // Grazing Key Sunlight (~72° terminator angle) from top-right
+      const sunLight = new THREE.DirectionalLight(0xfffef7, 2.45);
+      sunLight.position.set(2.85, 1.15, 1.60);
       this.scene.add(sunLight);
 
-      // Cosmic Earthshine / Deep Space Fill Light: Neutral soft dark navy (#131e2c)
-      const ambientLight = new THREE.AmbientLight(0x131e2c, 0.18);
+      // Ambient Earthshine / Deep Space Fill Light: Neutral soft dark navy
+      const ambientLight = new THREE.AmbientLight(0x0e1724, 0.18);
       this.scene.add(ambientLight);
 
-      // Subtle Rim/Glance Light for soft celestial silhouette
-      const rimLight = new THREE.DirectionalLight(0x8a9bb0, 0.35);
-      rimLight.position.set(-2.5, 0.5, -1.0);
+      // Subtle Rim/Glance Light for delicate celestial limb silhouette
+      const rimLight = new THREE.DirectionalLight(0x738fa8, 0.42);
+      rimLight.position.set(-2.6, 0.5, -1.1);
       this.scene.add(rimLight);
 
       // 5. Geometry: Smooth sphere
@@ -156,7 +170,6 @@ export class MoonScene {
       const onLoadCheck = () => {
         loadedCount++;
         if (loadedCount >= 2) {
-          // Smooth crossfade: Hide static poster once 3D textures are decoded
           this.hideFallback();
           options.onReady?.();
         }
@@ -177,11 +190,10 @@ export class MoonScene {
       this.bumpTexture.minFilter = THREE.LinearMipmapLinearFilter;
 
       // 7. Material: Physically grounded matte lunar regolith
-      // High roughness, minimal metalness (real rock / basalt)
       this.moonMaterial = new THREE.MeshStandardMaterial({
         map: this.albedoTexture,
         bumpMap: this.bumpTexture,
-        bumpScale: isMobile ? 0.03 : 0.045,
+        bumpScale: isMobile ? 0.03 : 0.046,
         roughness: 0.94,
         metalness: 0.02,
         color: 0xffffff
@@ -192,7 +204,7 @@ export class MoonScene {
       this.moonMesh.rotation.x = this.currentRotationX;
       this.scene.add(this.moonMesh);
 
-      // 8. Event Listeners for Drag-to-Rotate Interaction
+      // 8. Event Listeners for Drag-to-Rotate & Desktop Parallax
       this.renderer.domElement.addEventListener('pointerdown', this.boundOnPointerDown);
       window.addEventListener('pointermove', this.boundOnPointerMove);
       window.addEventListener('pointerup', this.boundOnPointerUp);
@@ -254,6 +266,10 @@ export class MoonScene {
     return this.isPaused;
   }
 
+  public setScrollProgress(progress: number): void {
+    this.scrollProgress = Math.max(0, Math.min(1, progress));
+  }
+
   private onVisibilityChange(): void {
     if (document.hidden) {
       this.stopLoop();
@@ -272,6 +288,15 @@ export class MoonScene {
   }
 
   private onPointerMove(e: PointerEvent): void {
+    // 1. Desktop Mouse Parallax (only when not dragging and on wider screens)
+    if (!this.isReducedMotion && window.innerWidth >= 768) {
+      const normX = (e.clientX / window.innerWidth) - 0.5;
+      const normY = (e.clientY / window.innerHeight) - 0.5;
+      this.mouseParallaxX = normX * 0.12;
+      this.mouseParallaxY = normY * 0.08;
+    }
+
+    // 2. Drag rotation
     if (!this.isDragging) return;
     const deltaX = e.clientX - this.previousMousePosition.x;
     const deltaY = e.clientY - this.previousMousePosition.y;
@@ -323,21 +348,55 @@ export class MoonScene {
     if (!this.renderer || !this.scene || !this.camera || !this.moonMesh) return;
 
     if (!this.isReducedMotion && !this.isPaused) {
-      // Natural slow planetary rotation (~150s per revolution)
+      // Natural slow axial rotation
       if (!this.isDragging) {
         this.targetRotationY += this.baseRotationSpeed;
         this.rotationVelocityY *= 0.92;
         this.rotationVelocityX *= 0.92;
       }
 
+      // Smooth dampening to target rotation
       this.currentRotationY += (this.targetRotationY - this.currentRotationY) * 0.08;
       this.currentRotationX += (this.targetRotationX - this.currentRotationX) * 0.08;
 
-      this.moonMesh.rotation.y = this.currentRotationY;
-      this.moonMesh.rotation.x = this.currentRotationX;
+      // Smooth mouse parallax damping
+      this.currentParallaxX += (this.mouseParallaxX - this.currentParallaxX) * 0.05;
+      this.currentParallaxY += (this.mouseParallaxY - this.currentParallaxY) * 0.05;
+
+      // Apply rotation: base + drag + scroll-linked shift + parallax
+      const scrollRotationShift = this.scrollProgress * 0.35;
+      this.moonMesh.rotation.y = this.currentRotationY + scrollRotationShift + this.currentParallaxX;
+      this.moonMesh.rotation.x = this.currentRotationX + this.currentParallaxY;
+
+      // Subtle camera parallax tilt
+      this.camera.position.x = this.currentParallaxX * 0.3;
+      this.camera.position.y = -this.currentParallaxY * 0.3 - (this.scrollProgress * 0.15);
+      this.camera.lookAt(0, 0, 0);
+
+      // Update live coordinates telemetry HUD
+      this.updateLiveCoordinates();
     }
 
     this.renderer.render(this.scene, this.camera);
+  }
+
+  private updateLiveCoordinates(): void {
+    if (!this.coordsElement || !this.moonMesh) return;
+
+    // Convert rotation angles to selenographic sub-observer coordinates
+    const degY = ((this.moonMesh.rotation.y * 180 / Math.PI) % 360 + 360) % 360;
+    const degX = (this.moonMesh.rotation.x * 180 / Math.PI);
+
+    let lonStr = '';
+    if (degY <= 180) {
+      lonStr = `${degY.toFixed(1)}° E`;
+    } else {
+      lonStr = `${(360 - degY).toFixed(1)}° W`;
+    }
+
+    const latStr = `${degX >= 0 ? '+' : ''}${degX.toFixed(1)}°`;
+
+    this.coordsElement.textContent = `SUB-OBS: ${latStr} ${lonStr} • TERM: 71.8°`;
   }
 
   public destroy(): void {

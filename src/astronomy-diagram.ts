@@ -1,58 +1,148 @@
 // Astronomy & Ephemeris Geometry Diagram
-// Powered by 'motion' (https://github.com/motiondivision/motion)
-// Coordinated line-draw reveal for Sabit's MABIMS Hilal Observation criteria.
+// Coordinated SVG line-draw reveals and interactive MABIMS parameter spotlight.
 
-import { animate, inView } from 'motion';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-export function initAstronomyDiagram(container: HTMLElement): void {
+gsap.registerPlugin(ScrollTrigger);
+
+export interface AstronomyDiagramController {
+  highlightParameter: (paramIndex: number) => void;
+  destroy: () => void;
+}
+
+export function initAstronomyDiagram(container: HTMLElement): AstronomyDiagramController {
   const svg = container.querySelector<SVGSVGElement>('.ephemeris-svg');
-  if (!svg) return;
+  if (!svg) {
+    return { highlightParameter: () => {}, destroy: () => {} };
+  }
 
   const paths = svg.querySelectorAll<SVGGeometryElement>('.draw-path');
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const labels = svg.querySelectorAll<SVGElement>('.diag-label, .diag-node');
+  const criteriaItems = document.querySelectorAll<HTMLElement>('.criteria-item');
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Pre-calculate path lengths
-  const pathLengths: number[] = [];
-  paths.forEach((path, idx) => {
+  const pathLengths = new Map<SVGGeometryElement, number>();
+  paths.forEach(path => {
     try {
       const len = path.getTotalLength();
-      pathLengths[idx] = len;
+      pathLengths.set(path, len);
       path.style.strokeDasharray = `${len}`;
-      if (prefersReducedMotion) {
-        path.style.strokeDashoffset = '0';
-        path.classList.add('drawn');
-      } else {
-        path.style.strokeDashoffset = `${len}`;
-      }
+      path.style.strokeDashoffset = prefersReduced ? '0' : `${len}`;
     } catch {
-      path.classList.add('drawn');
+      path.style.strokeDashoffset = '0';
     }
   });
 
-  if (prefersReducedMotion) return;
+  if (prefersReduced) {
+    labels.forEach(l => { (l as SVGElement).style.opacity = '1'; });
+  }
 
-  // Trigger line-draw via Motion inView
-  inView(container, () => {
-    paths.forEach((path, idx) => {
-      const len = pathLengths[idx] || 500;
-      const delay = 0.15 + idx * 0.18;
+  // ScrollTrigger timeline for entering the viewport
+  let ctx: gsap.Context | null = null;
 
-      animate(
-        path,
-        { strokeDashoffset: [len, 0] },
-        { duration: 0.85, delay, ease: [0.16, 1, 0.3, 1] }
+  if (!prefersReduced) {
+    ctx = gsap.context(() => {
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: container,
+          start: 'top 80%',
+          once: true
+        }
+      });
+
+      // Animate SVG stroke drawing sequentially
+      paths.forEach((path, idx) => {
+        tl.to(
+          path,
+          {
+            strokeDashoffset: 0,
+            duration: 0.9,
+            ease: 'power2.out'
+          },
+          idx * 0.18
+        );
+      });
+
+      // Animate labels and nodes fade-in
+      tl.fromTo(
+        labels,
+        { opacity: 0, y: 6 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          stagger: 0.08,
+          ease: 'power2.out'
+        },
+        '-=0.5'
       );
+    }, container);
+  }
+
+  // Interactive parameter highlighting
+  function highlightParameter(index: number): void {
+    // Parameter 1: Altitude (Tinggi Hilal >= 3°) -> path index 2 & box index 4
+    // Parameter 2: Elongation (Elongasi >= 6.4°) -> path index 3
+    // Parameter 3: Telemetry (All coordinates)
+    const altitudePath = svg?.querySelector('.path-altitude');
+    const elongationPath = svg?.querySelector('.path-elongation');
+    const horizonPath = svg?.querySelector('.path-horizon');
+    const thresholdPath = svg?.querySelector('.path-threshold');
+    const altitudeLabel = svg?.querySelector('.label-altitude');
+    const elongationLabel = svg?.querySelector('.label-elongation');
+
+    // Reset styles
+    svg?.querySelectorAll('.draw-path').forEach(p => {
+      (p as SVGElement).style.filter = '';
+      (p as SVGElement).style.opacity = '0.75';
     });
 
-    // Fade in labels and nodes
-    const labels = svg.querySelectorAll<SVGElement>('.diag-label, .diag-node');
-    labels.forEach((label, idx) => {
-      const delay = 0.45 + idx * 0.10;
-      animate(
-        label,
-        { opacity: [0, 1], y: [4, 0] },
-        { duration: 0.5, delay, ease: 'easeOut' }
-      );
+    if (index === 0) {
+      // Tinggi Hilal
+      if (altitudePath) {
+        (altitudePath as SVGElement).style.opacity = '1';
+        (altitudePath as SVGElement).style.filter = 'drop-shadow(0 0 6px rgba(169, 130, 74, 0.9))';
+      }
+      if (thresholdPath) {
+        (thresholdPath as SVGElement).style.opacity = '1';
+      }
+      if (altitudeLabel) {
+        gsap.fromTo(altitudeLabel, { scale: 1.15 }, { scale: 1.0, duration: 0.35 });
+      }
+    } else if (index === 1) {
+      // Elongasi
+      if (elongationPath) {
+        (elongationPath as SVGElement).style.opacity = '1';
+        (elongationPath as SVGElement).style.filter = 'drop-shadow(0 0 8px rgba(229, 169, 59, 0.95))';
+      }
+      if (elongationLabel) {
+        gsap.fromTo(elongationLabel, { scale: 1.15 }, { scale: 1.0, duration: 0.35 });
+      }
+    } else {
+      // All
+      if (horizonPath) (horizonPath as SVGElement).style.opacity = '1';
+      if (altitudePath) (altitudePath as SVGElement).style.opacity = '1';
+      if (elongationPath) (elongationPath as SVGElement).style.opacity = '1';
+    }
+
+    // Toggle active state on criteria cards
+    criteriaItems.forEach((item, idx) => {
+      item.classList.toggle('active', idx === index);
     });
-  }, { margin: '0px 0px -40px 0px' });
+  }
+
+  // Bind click/hover on criteria cards to spotlight corresponding diagram path
+  criteriaItems.forEach((item, idx) => {
+    item.addEventListener('mouseenter', () => highlightParameter(idx));
+    item.addEventListener('click', () => highlightParameter(idx));
+  });
+
+  return {
+    highlightParameter,
+    destroy: () => {
+      ctx?.revert();
+    }
+  };
 }

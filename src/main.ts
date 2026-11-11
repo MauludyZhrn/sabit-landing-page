@@ -1,16 +1,17 @@
 // Sabit Official Landing Page — Main Application Entry
-// Orchestrates Orbital Background, 3D Moon Centerpiece, Motion System, and Verified Releases.
+// Orchestrates Orbital Background, 3D Moon Centerpiece, GSAP Motion Engine, and Verified Releases.
 
 import { APP_CONFIG } from './config';
 import { initMotionSystem } from './motion';
 import { initAstronomyDiagram } from './astronomy-diagram';
 import { OrbitalBackground } from './orbital-background';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Populate Centralized Release & Repository URLs
   populateLinks();
 
-  // 2. Initialize Motion System (powered by 'motion')
+  // 2. Initialize Centralized Motion System (powered by GSAP & ScrollTrigger)
   const motionControl = initMotionSystem();
 
   // 3. Initialize Celestial Keplerian Orbital Background Canvas
@@ -29,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 4. Initialize Astronomy Geometry Diagram (Line-draw animation)
+  // 4. Initialize Astronomy Geometry Diagram (Line-draw & Parameter Spotlight)
   const diagramSection = document.querySelector<HTMLElement>('#ephemeris-diagram-container');
   if (diagramSection) {
     initAstronomyDiagram(diagramSection);
@@ -38,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 5. Lazy-Load 3D Moon Canvas with official NASA CGI Moon Kit textures
   const moonContainer = document.querySelector<HTMLElement>('#moon-canvas-container');
   const fallbackPoster = document.querySelector<HTMLElement>('#moon-fallback-poster');
+  const liveCoordsEl = document.querySelector<HTMLElement>('#moon-live-coords');
 
   if (moonContainer) {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -51,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const moonScene = new MoonScene({
             container: moonContainer,
             posterElement: fallbackPoster,
+            coordsElement: liveCoordsEl,
             albedoUrl: '/textures/lroc_color_2k.jpg',
             bumpUrl: '/textures/ldem_3_8bit.jpg',
             onReady: () => {
@@ -70,6 +73,18 @@ document.addEventListener('DOMContentLoaded', () => {
           if (motionControl.isMotionPaused()) {
             moonScene.setPaused(true);
           }
+
+          // Link Moon orientation to scroll progress through the hero section
+          if (heroSection) {
+            ScrollTrigger.create({
+              trigger: heroSection,
+              start: 'top top',
+              end: 'bottom top',
+              onUpdate: (self) => {
+                moonScene.setScrollProgress(self.progress);
+              }
+            });
+          }
         } catch (err) {
           console.error('Failed to dynamically load 3D Moon module:', err);
         }
@@ -80,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
           load3DMoon();
         });
       } else {
-        setTimeout(load3DMoon, 100);
+        setTimeout(load3DMoon, 80);
       }
     }
   }
@@ -128,6 +143,9 @@ function populateLinks(): void {
   });
   document.querySelectorAll<HTMLElement>('[data-value="installer-size"]').forEach(el => {
     el.textContent = APP_CONFIG.installerSizeLabel;
+  });
+  document.querySelectorAll<HTMLElement>('[data-value="installer-arch"]').forEach(el => {
+    el.textContent = APP_CONFIG.installerArch;
   });
   document.querySelectorAll<HTMLElement>('[data-value="lunar-credit"]').forEach(el => {
     el.textContent = APP_CONFIG.lunarDataCredit;
