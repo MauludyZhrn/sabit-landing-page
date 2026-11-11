@@ -148,6 +148,13 @@ button {
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border-hero);
   color: var(--text-hero-primary);
+  transition: background-color var(--dur-normal) ease, box-shadow var(--dur-normal) ease, border-color var(--dur-normal) ease;
+}
+
+.site-header.header-scrolled {
+  background-color: rgba(9, 14, 22, 0.96);
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
 .header-inner {
@@ -221,6 +228,7 @@ button {
   position: relative;
   color: var(--text-hero-secondary);
   transition: color var(--dur-fast) ease;
+  padding-block: 4px;
 }
 
 .nav-link:hover,
@@ -228,7 +236,7 @@ button {
   color: var(--text-hero-primary);
 }
 
-.nav-link.active::after {
+.nav-link::after {
   content: '';
   position: absolute;
   bottom: -4px;
@@ -237,6 +245,20 @@ button {
   height: 2px;
   background-color: var(--accent-brass);
   border-radius: 1px;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--dur-normal) var(--ease-restrained), opacity var(--dur-fast) ease;
+  opacity: 0;
+}
+
+.nav-link:hover::after {
+  transform: scaleX(0.45);
+  opacity: 0.6;
+}
+
+.nav-link.active::after {
+  transform: scaleX(1);
+  opacity: 1;
 }
 
 .header-actions {
@@ -284,6 +306,7 @@ button {
   justify-content: flex-end;
   pointer-events: none;
   visibility: hidden;
+  overflow: hidden;
   transition: visibility var(--dur-fast) ease;
 }
 
@@ -425,16 +448,21 @@ body.drawer-locked {
   background-color: var(--accent-brass);
   border: 1px solid var(--accent-brass);
   border-radius: var(--radius-sm);
-  transition: background-color var(--dur-fast) ease, border-color var(--dur-fast) ease, transform var(--dur-fast) ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: background-color var(--dur-fast) ease, border-color var(--dur-fast) ease, transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+  will-change: transform;
 }
 
 .btn-primary:hover {
   background-color: var(--accent-brass-hover);
   border-color: var(--accent-brass-hover);
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 14px rgba(169, 130, 74, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .btn-primary:active {
-  transform: translateY(1px);
+  transform: translateY(0.5px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .btn-secondary-dark {
@@ -450,11 +478,18 @@ body.drawer-locked {
   border: 1px solid var(--border-hero);
   border-radius: var(--radius-sm);
   transition: all var(--dur-fast) ease;
+  will-change: transform;
 }
 
 .btn-secondary-dark:hover {
   border-color: rgba(255, 255, 255, 0.25);
   background-color: rgba(255, 255, 255, 0.07);
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.btn-secondary-dark:active {
+  transform: translateY(0.5px);
 }
 
 /* ==========================================================================
@@ -511,6 +546,7 @@ body.drawer-locked {
 .hero-eyebrow {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   color: var(--accent-brass);
   margin-bottom: var(--space-md);
@@ -1477,8 +1513,36 @@ html.motion-paused .diag-node {
 }
 
 @media (max-width: 768px) {
+  .container {
+    padding-inline: 14px;
+  }
+
+  .site-nav {
+    display: none;
+  }
+
   .brand-logo-img {
-    height: 30px;
+    height: 26px;
+  }
+
+  .brand-version-badge {
+    display: none;
+  }
+
+  #motion-status-text {
+    display: none;
+  }
+
+  .header-actions {
+    gap: 8px;
+  }
+
+  .motion-toggle-btn {
+    padding: 5px;
+    width: 32px;
+    height: 32px;
+    justify-content: center;
+    flex-shrink: 0;
   }
 
   .nav-links {
@@ -1491,6 +1555,23 @@ html.motion-paused .diag-node {
 
   .mobile-menu-toggle {
     display: flex !important;
+    width: 34px;
+    height: 34px;
+    padding: 6px;
+    flex-shrink: 0;
+  }
+
+  .moon-telemetry-pill {
+    display: none;
+  }
+
+  .moon-coords-pill {
+    top: 2%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.62rem;
+    padding: 3px 10px;
+    white-space: nowrap;
   }
 
   .hero-section {
@@ -1500,6 +1581,18 @@ html.motion-paused .diag-node {
 
   .hero-title {
     font-size: 2.1rem;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .hero-actions .btn-primary,
+  .hero-actions .btn-secondary-dark {
+    width: 100%;
+    justify-content: center;
   }
 
   .hero-badges-capsule {
@@ -1547,6 +1640,18 @@ html.motion-paused .diag-node {
     padding-inline: 16px;
   }
 
+  /* Compact icon-only motion toggle button on small mobile */
+  #motion-status-text {
+    display: none;
+  }
+
+  .motion-toggle-btn {
+    padding: 7px;
+    width: 36px;
+    height: 36px;
+    justify-content: center;
+  }
+
   .hero-title {
     font-size: 1.80rem;
     line-height: 1.20;
@@ -1577,17 +1682,15 @@ html.motion-paused .diag-node {
   }
 
   .moon-telemetry-pill {
-    top: 2%;
-    right: 0%;
-    font-size: 0.60rem;
-    padding: 3px 6px;
+    display: none;
   }
 
   .moon-coords-pill {
-    font-size: 0.58rem;
-    padding: 3px 6px;
+    font-size: 0.62rem;
+    padding: 3px 8px;
     top: 2%;
-    left: 0%;
+    left: 50%;
+    transform: translateX(-50%);
     bottom: auto;
   }
 
@@ -1608,11 +1711,5 @@ html.motion-paused .diag-node {
   .download-spec-table td {
     padding-block: 8px;
     font-size: 0.80rem;
-  }
-}
-
-@media (max-width: 380px) {
-  .moon-telemetry-pill {
-    display: none;
   }
 }
