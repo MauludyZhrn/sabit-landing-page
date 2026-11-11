@@ -84,9 +84,11 @@ def capture_all():
 
     viewports = [
         ("mobile_360", 360, 780, True),
+        ("mobile_375", 375, 812, True),
         ("mobile_390", 390, 844, True),
         ("mobile_430", 430, 932, True),
         ("tablet_768", 768, 1024, True),
+        ("tablet_820", 820, 1180, True),
         ("desktop_1024", 1024, 768, False),
         ("desktop_1366", 1366, 768, False),
         ("desktop_1440", 1440, 900, False),

@@ -169,6 +169,7 @@ export function initMotionSystem(): MotionSystemController {
       const desktopNodes = gsap.utils.toArray<HTMLElement>('.workflow-desktop-nodes .workflow-node');
 
       if (workflowTimeline && desktopFill) {
+        let lastActiveIdx = -1;
         ScrollTrigger.create({
           trigger: workflowTimeline,
           start: 'top 75%',
@@ -178,19 +179,22 @@ export function initMotionSystem(): MotionSystemController {
             const p = self.progress;
             desktopFill.style.width = `${Math.max(15, p * 100)}%`;
 
-            // Sequential step highlighting based on progress quartile
+            // Sequential step highlighting based on progress quartile with state caching
             const activeIdx = Math.min(Math.floor(p * steps.length), steps.length - 1);
-            steps.forEach((step, idx) => {
-              const isActive = idx === activeIdx;
-              const isPast = idx < activeIdx;
-              step.classList.toggle('active', isActive);
-              step.classList.toggle('completed', isPast);
-            });
+            if (activeIdx !== lastActiveIdx) {
+              lastActiveIdx = activeIdx;
+              steps.forEach((step, idx) => {
+                const isActive = idx === activeIdx;
+                const isPast = idx < activeIdx;
+                step.classList.toggle('active', isActive);
+                step.classList.toggle('completed', isPast);
+              });
 
-            desktopNodes.forEach((node, idx) => {
-              node.classList.toggle('active', idx === activeIdx);
-              node.classList.toggle('completed', idx < activeIdx);
-            });
+              desktopNodes.forEach((node, idx) => {
+                node.classList.toggle('active', idx === activeIdx);
+                node.classList.toggle('completed', idx < activeIdx);
+              });
+            }
           }
         });
 
@@ -477,18 +481,24 @@ function initSectionHeaderReveals(): void {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Scroll Progress Bar
+// 4. Scroll Progress Bar (Throttled with Window Dimensions Cache)
 // ---------------------------------------------------------------------------
 function initScrollProgressBar(): void {
   const progressBar = document.querySelector<HTMLElement>('#scroll-progress-bar');
   if (!progressBar) return;
 
   let ticking = false;
+  let cachedDocHeight = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+
+  const recomputeHeight = () => {
+    cachedDocHeight = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+  };
+  window.addEventListener('resize', recomputeHeight, { passive: true });
+  window.addEventListener('load', recomputeHeight, { passive: true });
 
   const updateProgress = () => {
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    const progress = Math.min(100, Math.max(0, (scrollTop / cachedDocHeight) * 100));
     progressBar.style.width = `${progress}%`;
     ticking = false;
   };
@@ -668,34 +678,51 @@ function initScreenshotHotspots(): void {
 }
 
 // ---------------------------------------------------------------------------
-// 9. 3D Perspective Tilt on Desktop Screenshot Window
+// 9. 3D Perspective Tilt on Desktop Screenshot Window (RAF-Throttled, No Reflow)
 // ---------------------------------------------------------------------------
 function initScreenshot3DTilt(): void {
   const stage = document.querySelector<HTMLElement>('.screenshot-stage');
   if (!stage || window.innerWidth < 1024) return;
 
-  stage.addEventListener('mousemove', (e: MouseEvent) => {
-    const rect = stage.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const rotX = ((y / rect.height) - 0.5) * -4.0;
-    const rotY = ((x / rect.width) - 0.5) * 4.5;
+  let ticking = false;
+  let cachedRect: DOMRect | null = null;
 
-    gsap.to(stage, {
-      rotateX: rotX,
-      rotateY: rotY,
-      duration: 0.45,
-      ease: 'power1.out',
-      transformPerspective: 1200
-    });
-  });
+  stage.addEventListener('mouseenter', () => {
+    cachedRect = stage.getBoundingClientRect();
+  }, { passive: true });
+
+  stage.addEventListener('mousemove', (e: MouseEvent) => {
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        if (!cachedRect) cachedRect = stage.getBoundingClientRect();
+        const x = e.clientX - cachedRect.left;
+        const y = e.clientY - cachedRect.top;
+        const rotX = ((y / cachedRect.height) - 0.5) * -4.0;
+        const rotY = ((x / cachedRect.width) - 0.5) * 4.5;
+
+        gsap.to(stage, {
+          rotateX: rotX,
+          rotateY: rotY,
+          duration: 0.45,
+          ease: 'power1.out',
+          transformPerspective: 1200,
+          overwrite: 'auto'
+        });
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
 
   stage.addEventListener('mouseleave', () => {
+    cachedRect = null;
+    ticking = false;
     gsap.to(stage, {
       rotateX: 0,
       rotateY: 0,
       duration: 0.6,
-      ease: MOTION_TOKENS.easeGentle
+      ease: MOTION_TOKENS.easeGentle,
+      overwrite: 'auto'
     });
   });
 }

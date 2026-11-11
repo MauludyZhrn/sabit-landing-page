@@ -411,16 +411,17 @@ def test_motion():
         print(f"9. Reduced Motion Media Query Active: {reduced_test}")
         assert reduced_test, "prefers-reduced-motion media feature was not emulated properly"
 
-        # 11. Window Resize Resilience to Tablet & Mobile
+        # 11. Window Resize Resilience to Tablet 768px & 820px, and Mobile 375px
+        # A. Tablet 768px
         msg_id += 1
         ws_send(ws, json.dumps({
             "id": msg_id,
             "method": "Emulation.setDeviceMetricsOverride",
             "params": { "width": 768, "height": 1024, "deviceScaleFactor": 1, "mobile": True }
         }))
-        time.sleep(1)
+        time.sleep(0.8)
         msg_id += 1
-        resize_test = cdp_eval(ws, """
+        resize_768 = cdp_eval(ws, """
         (() => {
             const canvas = document.querySelector('.moon-webgl-canvas');
             const header = document.querySelector('.header-inner');
@@ -430,8 +431,79 @@ def test_motion():
             };
         })()
         """, msg_id)
-        print(f"10. Viewport Resize to Tablet 768px: canvasWidth={resize_test.get('canvasWidth')}, headerVisible={resize_test.get('headerVisible')}")
-        assert resize_test.get('headerVisible'), "Header is not visible after resize"
+        print(f"10. Viewport Resize to Tablet 768px: canvasWidth={resize_768.get('canvasWidth')}, headerVisible={resize_768.get('headerVisible')}")
+        assert resize_768.get('headerVisible'), "Header is not visible at 768px"
+
+        # B. Tablet 820px (iPad Air)
+        msg_id += 1
+        ws_send(ws, json.dumps({
+            "id": msg_id,
+            "method": "Emulation.setDeviceMetricsOverride",
+            "params": { "width": 820, "height": 1180, "deviceScaleFactor": 1, "mobile": True }
+        }))
+        time.sleep(0.8)
+        msg_id += 1
+        resize_820 = cdp_eval(ws, """
+        (() => {
+            const moonStage = document.querySelector('.hero-visual-stage');
+            const header = document.querySelector('.header-inner');
+            return {
+                stageVisible: !!moonStage,
+                headerVisible: header && window.getComputedStyle(header).visibility !== 'hidden'
+            };
+        })()
+        """, msg_id)
+        print(f"11. Viewport Resize to Tablet 820px: stageVisible={resize_820.get('stageVisible')}, headerVisible={resize_820.get('headerVisible')}")
+        assert resize_820.get('headerVisible'), "Header is not visible at 820px"
+
+        # C. Mobile 375px (iPhone SE/11/X)
+        msg_id += 1
+        ws_send(ws, json.dumps({
+            "id": msg_id,
+            "method": "Emulation.setDeviceMetricsOverride",
+            "params": { "width": 375, "height": 812, "deviceScaleFactor": 1, "mobile": True }
+        }))
+        time.sleep(0.8)
+        msg_id += 1
+        resize_375 = cdp_eval(ws, """
+        (() => {
+            const moonCanvas = document.querySelector('.moon-webgl-canvas');
+            const hamburger = document.querySelector('#mobile-menu-toggle');
+            return {
+                moonCanvasVisible: !!moonCanvas,
+                hamburgerVisible: hamburger && window.getComputedStyle(hamburger).display !== 'none'
+            };
+        })()
+        """, msg_id)
+        print(f"12. Viewport Resize to Mobile 375px: moonCanvas={resize_375.get('moonCanvasVisible')}, hamburgerVisible={resize_375.get('hamburgerVisible')}")
+        assert resize_375.get('hamburgerVisible'), "Hamburger menu is not visible at 375px"
+
+        # 13. Real Browser Performance Metrics Readback
+        msg_id += 1
+        perf_metrics = cdp_eval(ws, """
+        (() => {
+            const nav = performance.getEntriesByType('navigation')[0] || {};
+            const memory = performance.memory || {};
+            const clsEntries = performance.getEntriesByType('layout-shift') || [];
+            let clsScore = 0;
+            clsEntries.forEach(entry => {
+                if (!entry.hadRecentInput) clsScore += entry.value;
+            });
+
+            return {
+                domContentLoadedMs: nav.domContentLoadedEventEnd ? Math.round(nav.domContentLoadedEventEnd) : 'N/A',
+                loadCompleteMs: nav.loadEventEnd ? Math.round(nav.loadEventEnd) : 'N/A',
+                jsHeapUsedMB: memory.usedJSHeapSize ? Math.round(memory.usedJSHeapSize / 1048576 * 10) / 10 : 'N/A',
+                jsHeapTotalMB: memory.totalJSHeapSize ? Math.round(memory.totalJSHeapSize / 1048576 * 10) / 10 : 'N/A',
+                clsScore: Math.round(clsScore * 1000) / 1000
+            };
+        })()
+        """, msg_id)
+        print("13. Browser Performance Diagnostics:")
+        print(f"   - DOMContentLoaded Event: {perf_metrics.get('domContentLoadedMs')} ms")
+        print(f"   - Load Event: {perf_metrics.get('loadCompleteMs')} ms")
+        print(f"   - JS Heap Memory: {perf_metrics.get('jsHeapUsedMB')} MB used / {perf_metrics.get('jsHeapTotalMB')} MB total")
+        print(f"   - Cumulative Layout Shift (CLS): {perf_metrics.get('clsScore')}")
 
         print("\n=== ALL CINEMATIC SECTION & MOTION INTERACTION TESTS PASSED ===")
         return True
