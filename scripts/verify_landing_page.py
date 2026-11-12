@@ -50,7 +50,7 @@ def verify():
         size = os.path.getsize(installer_path)
         print(f"  ✓ Found installer at: {installer_path}")
         print(f"  ✓ Size: {size:,} bytes ({size / (1024*1024):.1f} MB)")
-        assert size == 32731541, f"Expected 32,731,541 bytes, got {size}"
+        assert size == 33582866, f"Expected 33,582,866 bytes, got {size}"
     else:
         print(f"  ❌ Installer not found at {installer_path}!")
 

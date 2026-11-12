@@ -20,7 +20,7 @@ export const APP_CONFIG: AppConfig = {
   githubRepoUrl: 'https://github.com/MauludyZhrn/Sabit',
   windowsInstallerUrl: '/downloads/Sabit-Setup-v1.0.0-x64.exe',
   windowsInstallerFilename: 'Sabit-Setup-v1.0.0-x64.exe',
-  installerSizeLabel: '31.2 MB',
+  installerSizeLabel: '32.0 MB',
   installerArch: 'Windows 10 / 11 (64-bit)',
   lunarDataCredit: 'NASA/GSFC/Arizona State University — LRO/LOLA (CGI Moon Kit)'
 };
