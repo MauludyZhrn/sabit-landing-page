@@ -10,6 +10,7 @@
 #include <QToolButton>
 #include <QPushButton>
 #include <QLabel>
+#include <atomic>
 #include <memory>
 
 #include "src/app/app_controller.h"
@@ -29,7 +30,7 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
     explicit MainWindow(app::AppController& controller, QWidget* parent = nullptr);
-    ~MainWindow() override = default;
+    ~MainWindow() override;
 
 private slots:
     void on_timer_tick();
@@ -45,6 +46,8 @@ private slots:
     void on_plate_solve_clicked();
     void on_export_pdf_clicked();
     void on_export_diagnostic_clicked();
+    void on_report_issue_clicked();
+    void on_check_updates_clicked(bool silent_startup = false);
     void on_open_settings_clicked();
     void on_open_calibration_wizard();
     void on_preset_daylight();
@@ -73,6 +76,8 @@ private:
     void handle_camera_connected(const camera::CameraId& cam, const core::Result<camera::CameraCaps>& res);
     void refresh_theme_icons();
     void update_ai_toolbar_button(AiButtonState state);
+    void load_persisted_settings();
+    void save_persisted_settings();
 
     QIcon get_asset_icon(const QString& filename) const;
 
@@ -183,6 +188,11 @@ private:
     QTimer* update_timer_{nullptr};
 
     AiButtonState current_ai_state_{AiButtonState::Off};
+
+    bool auto_check_updates_{true};
+    bool update_check_in_progress_{false};
+    QString custom_update_manifest_url_;
+    std::shared_ptr<std::atomic<bool>> alive_flag_{std::make_shared<std::atomic<bool>>(true)};
 };
 
 } // namespace sabit::ui

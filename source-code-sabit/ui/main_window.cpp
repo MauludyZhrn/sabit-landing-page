@@ -10,6 +10,8 @@
 #include "src/ui/dialogs/session_summary_dialog.h"
 #include "src/ui/dialogs/export_dialog.h"
 #include "src/ui/dialogs/configure_capture_dialog.h"
+#include "src/ui/dialogs/report_issue_dialog.h"
+#include "src/ui/dialogs/update_dialog.h"
 #include "src/astro/criteria.h"
 #include "src/astro/plate_solver.h"
 #include "src/imaging/io/fits_writer.h"
@@ -30,13 +32,18 @@
 #include <QUrl>
 #include <QFrame>
 #include <QDir>
+#include <QDirIterator>
 #include <QDateTime>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QApplication>
 #include <QFile>
 #include <QFileInfo>
+#include <QMetaObject>
+#include <QPointer>
 #include <filesystem>
 #include <iostream>
+#include <thread>
 
 namespace sabit::ui {
 
@@ -106,6 +113,21 @@ MainWindow::MainWindow(app::AppController& controller, QWidget* parent)
         manifest_p = "models/manifest.json";
     }
     controller_.init_ai(model_p, manifest_p);
+    load_persisted_settings();
+
+    if (QGuiApplication::platformName() != "offscreen") {
+        QTimer::singleShot(3000, this, [this]() {
+            if (auto_check_updates_) {
+                on_check_updates_clicked(true);
+            }
+        });
+    }
+}
+
+MainWindow::~MainWindow() {
+    if (alive_flag_) {
+        alive_flag_->store(false);
+    }
 }
 
 QIcon MainWindow::get_asset_icon(const QString& filename) const {
@@ -313,14 +335,10 @@ void MainWindow::create_menus() {
     m_help_->addSeparator();
 
     act_check_updates_ = m_help_->addAction(tr_str("check_updates"), this, [this]() {
-        bool is_id = (Translator::instance().language() == Language::Indonesian);
-        QMessageBox::information(this,
-            is_id ? "Periksa Pembaruan" : "Check for Updates",
-            is_id ? "Anda telah menggunakan Sabit versi terbaru (v1.0.0 Native C++20 / Qt6)."
-                  : "You are running the latest version of Sabit (v1.0.0 Native C++20 / Qt6).");
+        on_check_updates_clicked(false);
     });
 
-    act_report_issue_ = m_help_->addAction(tr_str("report_issue"), this, &MainWindow::on_export_diagnostic_clicked);
+    act_report_issue_ = m_help_->addAction(tr_str("report_issue"), this, &MainWindow::on_report_issue_clicked);
 
     m_help_->addSeparator();
     act_about_ = m_help_->addAction(tr_str("about"), this, &MainWindow::on_about_clicked);
@@ -1150,7 +1168,12 @@ void MainWindow::process_offline_stack(const QStringList& file_paths) {
 void MainWindow::on_open_capture_folder() {
     std::string folder_path = controller_.captures_dir();
     if (controller_.is_session_active()) {
-        folder_path = controller_.session_info().folder_path;
+        std::string cap_sub = controller_.session().get_captures_dir();
+        if (std::filesystem::exists(cap_sub)) {
+            folder_path = cap_sub;
+        } else {
+            folder_path = controller_.session_info().folder_path;
+        }
     }
     try {
         std::filesystem::create_directories(folder_path);
@@ -1174,6 +1197,7 @@ void MainWindow::on_set_capture_folder_clicked() {
     );
     if (!dir.isEmpty()) {
         controller_.set_captures_dir(dir.toStdString());
+        save_persisted_settings();
         bool is_id = (Translator::instance().language() == Language::Indonesian);
         video_widget_->show_toast(QString(is_id ? "Folder Tangkapan: %1" : "Capture Folder: %1").arg(dir));
     }
@@ -1181,7 +1205,13 @@ void MainWindow::on_set_capture_folder_clicked() {
 
 void MainWindow::on_delete_capture_clicked() {
     bool is_id = (Translator::instance().language() == Language::Indonesian);
-    std::string folder_path = controller_.is_session_active() ? controller_.session_info().folder_path : "sessions";
+    std::string folder_path = controller_.is_session_active()
+        ? controller_.session().get_captures_dir()
+        : controller_.captures_dir();
+    if (!std::filesystem::exists(folder_path) && controller_.is_session_active()) {
+        folder_path = controller_.session_info().folder_path;
+    }
+
     QDir dir(QString::fromStdString(folder_path));
     if (!dir.exists()) {
         video_widget_->show_toast(is_id ? "Belum ada berkas tangkapan" : "No capture files found");
@@ -1190,13 +1220,21 @@ void MainWindow::on_delete_capture_clicked() {
 
     QStringList filters;
     filters << "*.fits" << "*.fit" << "*.tiff" << "*.tif" << "*.png" << "*.jpg" << "*.mp4" << "*.avi" << "*.ser";
-    QFileInfoList list = dir.entryInfoList(filters, QDir::Files, QDir::Time);
-    if (list.isEmpty()) {
+    QDirIterator it(QString::fromStdString(folder_path), filters, QDir::Files, QDirIterator::Subdirectories);
+    QFileInfo latest;
+    while (it.hasNext()) {
+        it.next();
+        QFileInfo fi = it.fileInfo();
+        if (latest.filePath().isEmpty() || fi.lastModified() > latest.lastModified()) {
+            latest = fi;
+        }
+    }
+
+    if (latest.filePath().isEmpty()) {
         video_widget_->show_toast(is_id ? "Tidak ada berkas tangkapan untuk dihapus" : "No capture files to delete");
         return;
     }
 
-    QFileInfo latest = list.first();
     auto reply = QMessageBox::question(
         this,
         is_id ? "Hapus Tangkapan Terakhir" : "Delete Latest Capture",
@@ -1772,16 +1810,209 @@ void MainWindow::on_export_diagnostic_clicked() {
     dlg.exec();
 }
 
+void MainWindow::on_report_issue_clicked() {
+    ReportIssueDialog dlg(controller_, this);
+    dlg.exec();
+}
+
+void MainWindow::on_check_updates_clicked(bool silent_startup) {
+    if (update_check_in_progress_) return;
+    update_check_in_progress_ = true;
+
+    bool is_id = (Translator::instance().language() == Language::Indonesian);
+    if (!silent_startup && video_widget_) {
+        video_widget_->show_toast(is_id ? "Memeriksa pembaruan Sabit..." : "Checking for Sabit updates...");
+    }
+
+    QPointer<MainWindow> self(this);
+    auto alive = alive_flag_;
+    QString manifest_url = custom_update_manifest_url_;
+
+    std::thread([self, alive, manifest_url, silent_startup]() {
+        UpdateInfo info = UpdateDialog::fetch_latest_update_sync(manifest_url);
+        if (!alive || !alive->load()) return;
+
+        QMetaObject::invokeMethod(qApp, [self, alive, info, silent_startup]() {
+            if (!alive || !alive->load() || !self) return;
+            self->update_check_in_progress_ = false;
+
+            if (silent_startup) {
+                if (info.check_succeeded && info.update_available) {
+                    UpdateDialog dlg(info, self);
+                    dlg.exec();
+                }
+            } else {
+                UpdateDialog dlg(info, self);
+                dlg.exec();
+            }
+        }, Qt::QueuedConnection);
+    }).detach();
+}
+
+void MainWindow::load_persisted_settings() {
+    QString app_dir = QCoreApplication::applicationDirPath();
+    QStringList candidates = {
+        app_dir + "/settings.json",
+        "settings.json"
+    };
+
+    QString target_path;
+    for (const auto& p : candidates) {
+        if (QFile::exists(p)) {
+            target_path = p;
+            break;
+        }
+    }
+    if (target_path.isEmpty()) return;
+
+    QFile f(target_path);
+    if (!f.open(QIODevice::ReadOnly)) return;
+
+    QJsonDocument doc = QJsonDocument::fromJson(f.readAll());
+    if (!doc.isObject()) return;
+    QJsonObject root = doc.object();
+
+    // 1. Capture output directory & format
+    if (root.contains("capture") && root["capture"].isObject()) {
+        QJsonObject cap_obj = root["capture"].toObject();
+        if (cap_obj.contains("output_dir")) {
+            QString out_d = cap_obj["output_dir"].toString();
+            if (!out_d.isEmpty()) controller_.set_captures_dir(out_d.toStdString());
+        }
+        if (cap_obj.contains("format") && format_combo_) {
+            QString fmt = cap_obj["format"].toString();
+            if (!fmt.startsWith(".")) fmt = "." + fmt;
+            int idx = format_combo_->findText(fmt);
+            if (idx >= 0) format_combo_->setCurrentIndex(idx);
+        }
+    } else if (root.contains("capture_dir")) {
+        QString out_d = root["capture_dir"].toString();
+        if (!out_d.isEmpty()) controller_.set_captures_dir(out_d.toStdString());
+    }
+
+    // 2. Site / Observer location
+    if (root.contains("site") && root["site"].isObject()) {
+        QJsonObject s_obj = root["site"].toObject();
+        std::string s_name = s_obj["preset"].toString("Semarang").toStdString();
+        double lat = s_obj["latitude"].toDouble(-6.9932);
+        double lon = s_obj["longitude"].toDouble(110.4203);
+        double elev = s_obj["elevation_m"].toDouble(50.0);
+        auto site_res = astro::Site::create(s_name, lat, lon, elev, 7.0, true);
+        if (site_res.is_ok()) {
+            controller_.set_observer_site(site_res.value());
+        }
+    }
+
+    // 3. AI confidence
+    if (root.contains("ai") && root["ai"].isObject()) {
+        QJsonObject ai_obj = root["ai"].toObject();
+        if (ai_obj.contains("confidence") && ai_conf_spin_) {
+            double c = ai_obj["confidence"].toDouble(0.40);
+            ai_conf_spin_->setValue(c);
+            controller_.set_ai_conf_threshold(static_cast<float>(c));
+        }
+    }
+
+    // 4. Stacking alignment
+    if (root.contains("phase_correlation_align") && processing_panel_) {
+        processing_panel_->set_align_enabled(root["phase_correlation_align"].toBool(true));
+        controller_.enable_stack_alignment(root["phase_correlation_align"].toBool(true));
+    }
+
+    // 5. Update checker settings
+    if (root.contains("general") && root["general"].isObject()) {
+        QJsonObject gen_obj = root["general"].toObject();
+        if (gen_obj.contains("auto_check_updates")) {
+            auto_check_updates_ = gen_obj["auto_check_updates"].toBool(true);
+        }
+    }
+    if (root.contains("auto_check_updates")) {
+        auto_check_updates_ = root["auto_check_updates"].toBool(true);
+    }
+    if (root.contains("update_manifest_url")) {
+        custom_update_manifest_url_ = root["update_manifest_url"].toString().trimmed();
+    }
+}
+
+void MainWindow::save_persisted_settings() {
+    QJsonObject root;
+    root["schema"] = 2;
+
+    // General
+    QJsonObject gen;
+    gen["language"] = (Translator::instance().language() == Language::Indonesian ? "id" : "en");
+    gen["theme"] = (ThemeManager::instance().current_theme() == ThemeType::NightRed ? "night_red" : "dark");
+    gen["prevent_sleep"] = true;
+    gen["auto_check_updates"] = auto_check_updates_;
+    root["general"] = gen;
+    root["auto_check_updates"] = auto_check_updates_;
+    if (!custom_update_manifest_url_.isEmpty()) {
+        root["update_manifest_url"] = custom_update_manifest_url_;
+    }
+
+    // Site
+    auto s = controller_.observer_site();
+    QJsonObject site;
+    site["preset"] = QString::fromStdString(s.name);
+    site["latitude"] = s.latitude;
+    site["longitude"] = s.longitude;
+    site["elevation_m"] = s.elevation_m;
+    site["timezone"] = "Asia/Jakarta";
+    site["refraction"] = s.refraction;
+    root["site"] = site;
+
+    // Capture
+    QJsonObject cap;
+    cap["output_dir"] = QString::fromStdString(controller_.captures_dir());
+    cap["format"] = format_combo_ ? format_combo_->currentText() : ".fits";
+    cap["filename_pattern"] = "{DATE}_{TIME}_{TARGET}_{SEQ}";
+    root["capture"] = cap;
+
+    // Compatibility flat keys
+    root["capture_dir"] = QString::fromStdString(controller_.captures_dir());
+    root["default_format"] = format_combo_ ? format_combo_->currentText() : ".fits";
+    if (ai_conf_spin_) root["ai_confidence"] = ai_conf_spin_->value();
+    if (processing_panel_) root["phase_correlation_align"] = processing_panel_->is_align_enabled();
+
+    // AI
+    QJsonObject ai;
+    ai["model"] = "models/hilal_v1.onnx";
+    ai["confidence"] = ai_conf_spin_ ? ai_conf_spin_->value() : 0.40;
+    ai["provider"] = "cpu";
+    root["ai"] = ai;
+
+    QString app_dir = QCoreApplication::applicationDirPath();
+    QStringList targets = {
+        app_dir + "/settings.json",
+        "settings.json"
+    };
+
+    QByteArray data = QJsonDocument(root).toJson(QJsonDocument::Indented);
+    for (const auto& p : targets) {
+        QFile f(p);
+        if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            f.write(data);
+            f.close();
+        }
+    }
+}
+
 void MainWindow::on_open_settings_clicked() {
     double cur_conf = ai_conf_spin_ ? ai_conf_spin_->value() : 0.40;
     bool align_en = processing_panel_ ? processing_panel_->is_align_enabled() : true;
-    SettingsDialog dlg(controller_.observer_site(), cur_conf, align_en, this);
+    QString cur_cap_dir = QString::fromStdString(controller_.captures_dir());
+    SettingsDialog dlg(controller_.observer_site(), cur_conf, align_en, cur_cap_dir, this);
     if (dlg.exec() == QDialog::Accepted) {
         ThemeManager::instance().apply_theme(qApp, dlg.selected_theme());
         Translator::instance().set_language(dlg.selected_language());
         controller_.set_observer_site(dlg.selected_site());
         controller_.set_ai_conf_threshold(static_cast<float>(dlg.selected_ai_conf()));
         controller_.enable_stack_alignment(dlg.selected_align_enabled());
+
+        QString new_cap_dir = dlg.selected_capture_dir();
+        if (!new_cap_dir.isEmpty()) {
+            controller_.set_captures_dir(new_cap_dir.toStdString());
+        }
 
         if (ai_conf_spin_) {
             ai_conf_spin_->setValue(dlg.selected_ai_conf());
@@ -1790,6 +2021,8 @@ void MainWindow::on_open_settings_clicked() {
             int fmt_idx = format_combo_->findText(dlg.selected_default_format());
             if (fmt_idx >= 0) format_combo_->setCurrentIndex(fmt_idx);
         }
+
+        save_persisted_settings();
 
         refresh_theme_icons();
         retranslate_ui();

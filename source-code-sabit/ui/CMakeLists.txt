@@ -53,6 +53,10 @@ add_library(sabit_ui STATIC
     dialogs/export_dialog.cpp
     dialogs/configure_capture_dialog.h
     dialogs/configure_capture_dialog.cpp
+    dialogs/report_issue_dialog.h
+    dialogs/report_issue_dialog.cpp
+    dialogs/update_dialog.h
+    dialogs/update_dialog.cpp
     main_window.h
     main_window.cpp
 )
@@ -74,5 +78,9 @@ target_link_libraries(sabit_ui PUBLIC
     Qt6::Gui
     Qt6::Svg
 )
+
+if(WIN32)
+    target_link_libraries(sabit_ui PUBLIC winhttp)
+endif()
 
 target_compile_features(sabit_ui PUBLIC cxx_std_20)
