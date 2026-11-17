@@ -5,6 +5,7 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QCheckBox>
+#include <QSyntaxHighlighter>
 
 namespace sabit::ui {
 
@@ -15,7 +16,9 @@ public:
     ~LiveLogPanel() override = default;
 
     void poll_logs();
+    void append_log_line(const QString& line);
     void retranslate_ui();
+    [[nodiscard]] QPlainTextEdit* log_view() const { return log_edit_; }
 
 private slots:
     void on_clear();
@@ -23,6 +26,7 @@ private slots:
 
 private:
     QPlainTextEdit* log_edit_{nullptr};
+    QSyntaxHighlighter* highlighter_{nullptr};
     QCheckBox* autoscroll_check_{nullptr};
     QPushButton* clear_btn_{nullptr};
     QPushButton* copy_btn_{nullptr};

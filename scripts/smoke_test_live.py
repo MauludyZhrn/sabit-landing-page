@@ -19,7 +19,7 @@ with urllib.request.urlopen(req) as resp:
     print('   - Motion toggle button present:', 'motion-toggle-btn' in html)
     print('   - Mobile drawer present:', 'mobile-nav-drawer' in html)
     print('   - Desktop repo link verified:', 'https://github.com/MauludyZhrn/Sabit' in html)
-    print('   - Installer link verified:', '/downloads/Sabit-Setup-v1.0.0-x64.exe' in html)
+    print('   - Installer link verified:', '/downloads/Sabit-Setup-v1.0.1-x64.exe' in html)
 
 # 2. Robots.txt
 req = urllib.request.Request(f'{BASE}/robots.txt', headers=headers)
@@ -34,7 +34,7 @@ with urllib.request.urlopen(req) as resp:
     print('3. Sitemap.xml Status:', resp.status, '| Valid XML:', '<urlset' in sitemap)
 
 # 4. Installer
-req = urllib.request.Request(f'{BASE}/downloads/Sabit-Setup-v1.0.0-x64.exe', headers={'User-Agent': 'Mozilla/5.0', 'Range': 'bytes=0-1023'})
+req = urllib.request.Request(f'{BASE}/downloads/Sabit-Setup-v1.0.1-x64.exe', headers={'User-Agent': 'Mozilla/5.0', 'Range': 'bytes=0-1023'})
 with urllib.request.urlopen(req) as resp:
     chunk = resp.read(2)
     print('4. Installer Status:', resp.status)
@@ -47,7 +47,7 @@ with urllib.request.urlopen(req) as resp:
     print('5. NASA LRO Albedo Texture Status:', resp.status)
 
 # 6. Check full content-length of installer with HEAD request
-req = urllib.request.Request(f'{BASE}/downloads/Sabit-Setup-v1.0.0-x64.exe', headers={'User-Agent': 'Mozilla/5.0'}, method='HEAD')
+req = urllib.request.Request(f'{BASE}/downloads/Sabit-Setup-v1.0.1-x64.exe', headers={'User-Agent': 'Mozilla/5.0'}, method='HEAD')
 with urllib.request.urlopen(req) as resp:
     print('6. Installer Full HEAD Status:', resp.status, '| Content-Length:', resp.headers.get('Content-Length'))
 

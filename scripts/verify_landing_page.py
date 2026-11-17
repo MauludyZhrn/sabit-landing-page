@@ -45,12 +45,12 @@ def verify():
 
     # 4. Check installer binary integrity
     print("\n[3] Checking Installer Payload:")
-    installer_path = os.path.join('public', 'downloads', 'Sabit-Setup-v1.0.0-x64.exe')
+    installer_path = os.path.join('public', 'downloads', 'Sabit-Setup-v1.0.1-x64.exe')
     if os.path.exists(installer_path):
         size = os.path.getsize(installer_path)
         print(f"  ✓ Found installer at: {installer_path}")
         print(f"  ✓ Size: {size:,} bytes ({size / (1024*1024):.1f} MB)")
-        assert size == 33619636, f"Expected 33,619,636 bytes, got {size}"
+        assert size == 33629172, f"Expected 33,629,172 bytes, got {size}"
     else:
         print(f"  ❌ Installer not found at {installer_path}!")
 

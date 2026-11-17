@@ -115,6 +115,15 @@ MainWindow::MainWindow(app::AppController& controller, QWidget* parent)
     controller_.init_ai(model_p, manifest_p);
     load_persisted_settings();
 
+    auto boot_site = controller_.observer_site();
+    SABIT_LOG_INFO("[System] Sabit Initialized: Version=v" + std::string(SABIT_CURRENT_VERSION) +
+                   " Arch=x64 Engine=NativeQt6");
+    SABIT_LOG_INFO("[Ephemeris] Site=" + boot_site.name +
+                   " Lat=" + std::to_string(boot_site.latitude) +
+                   " Lon=" + std::to_string(boot_site.longitude));
+    SABIT_LOG_INFO("[AI] Telemetry Ready: Model=hilal_v1.onnx Threshold=" +
+                   std::to_string(ai_conf_spin_ ? ai_conf_spin_->value() : 0.40));
+
     if (QGuiApplication::platformName() != "offscreen") {
         QTimer::singleShot(3000, this, [this]() {
             if (auto_check_updates_) {
@@ -2036,14 +2045,14 @@ void MainWindow::on_about_clicked() {
     if (is_id) {
         QMessageBox::about(this, "Tentang Sabit",
             "<h3>Sabit \xe2\x80\x94 Presisi Otomatis Pengamatan Hilal</h3>"
-            "<p>Versi 1.0.0 (Native C++20 / Qt6)</p>"
+            "<p>Versi 1.0.1 (Native C++20 / Qt6)</p>"
             "<p>Aplikasi observasi dan pembuktian rukyatul hilal terintegrasi dengan pemrosesan citra 16-bit, "
             "plate solving astrometri bintang, kalkulasi astronomi toposentrik presisi, dan deteksi kecerdasan buatan (YOLO AI) berbasis ONNX Runtime.</p>"
             "<p>Dikembangkan untuk mendukung sidang isbat dan riset ilmu falak di Indonesia.</p>");
     } else {
         QMessageBox::about(this, "About Sabit",
             "<h3>Sabit \xe2\x80\x94 Automated Precision for Lunar Sighting</h3>"
-            "<p>Version 1.0.0 (Native C++20 / Qt6)</p>"
+            "<p>Version 1.0.1 (Native C++20 / Qt6)</p>"
             "<p>Integrated crescent sighting observation application with 16-bit image processing, "
             "astrometric star plate solving, precision topocentric astronomical calculations, and ONNX Runtime YOLO AI detection.</p>"
             "<p>Developed for astronomical research and lunar crescent verification.</p>");

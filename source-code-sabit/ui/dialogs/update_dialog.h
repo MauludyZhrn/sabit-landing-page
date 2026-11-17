@@ -3,15 +3,15 @@
 
 #include <QDialog>
 #include <QLabel>
-#include <QPlainTextEdit>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QTextBrowser>
 #include <QString>
 #include <QByteArray>
 #include <atomic>
 #include <thread>
 
-#define SABIT_CURRENT_VERSION "1.0.0"
+#define SABIT_CURRENT_VERSION "1.0.1"
 
 namespace sabit::ui {
 
@@ -44,6 +44,10 @@ public:
     [[nodiscard]] static UpdateInfo fetch_latest_update_sync(
         const QString& custom_manifest_url = QString(),
         const QString& current_ver = SABIT_CURRENT_VERSION);
+    [[nodiscard]] static QString format_release_notes_html(
+        const QString& raw_notes,
+        const UpdateInfo& info,
+        bool is_id);
 
 private slots:
     void on_update_now_clicked();
@@ -55,7 +59,7 @@ private:
     UpdateInfo info_;
     QLabel* title_lbl_{nullptr};
     QLabel* version_badge_lbl_{nullptr};
-    QPlainTextEdit* notes_edit_{nullptr};
+    QTextBrowser* notes_browser_{nullptr};
     QProgressBar* progress_bar_{nullptr};
     QLabel* status_lbl_{nullptr};
     QPushButton* update_now_btn_{nullptr};

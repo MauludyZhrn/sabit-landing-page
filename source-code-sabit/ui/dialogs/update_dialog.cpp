@@ -467,10 +467,124 @@ UpdateInfo UpdateDialog::fetch_latest_update_sync(const QString& custom_manifest
     return failed;
 }
 
+QString UpdateDialog::format_release_notes_html(const QString& raw_notes, const UpdateInfo& info, bool is_id) {
+    auto format_inline_md = [](const QString& line) -> QString {
+        QString s = line.toHtmlEscaped();
+        static const QRegularExpression re_code(R"(`([^`]+)`)");
+        s.replace(re_code,
+            "<code style=\"background-color:#1E1830;color:#67E8F9;padding:1px 4px;"
+            "font-family:'Cascadia Mono','Consolas','Courier New',monospace;\">\\1</code>");
+        static const QRegularExpression re_bold(R"(\*\*([^*]+)\*\*)");
+        s.replace(re_bold, "<b style=\"color:#F3E8FF;\">\\1</b>");
+        return s;
+    };
+
+    const QString ver_str = info.latest_version.isEmpty() ? QString(SABIT_CURRENT_VERSION) : info.latest_version;
+    const QString date_str = info.release_date.isEmpty() ? QString("-") : info.release_date;
+
+    QString html;
+    html += "<html><body style=\"font-family:'Segoe UI Variable','Segoe UI',sans-serif;color:#E2E8F0;font-size:12px;margin:0;padding:2px;\">";
+
+    // Top metadata pill bar
+    html += "<table width=\"100%\" cellspacing=\"0\" cellpadding=\"6\" style=\"background-color:#161224;border:1px solid #322A4A;margin-bottom:10px;\"><tr>";
+    html += QString("<td style=\"color:#C4B5FD;font-weight:bold;\">%1: <span style=\"color:#34D399;\">v%2</span></td>")
+                .arg(is_id ? "Rilis" : "Release", ver_str.toHtmlEscaped());
+    html += QString("<td align=\"center\" style=\"color:#94A3B8;\">%1: <span style=\"color:#E2E8F0;\">%2</span></td>")
+                .arg(is_id ? "Tanggal" : "Date", date_str.toHtmlEscaped());
+    html += QString("<td align=\"right\" style=\"color:#94A3B8;\">%1: <span style=\"color:#38BDF8;\">Windows x64</span></td>")
+                .arg(is_id ? "Kanal" : "Channel");
+    html += "</tr></table>";
+
+    const QStringList lines = raw_notes.split('\n');
+    bool in_list = false;
+    bool in_code_block = false;
+    QStringList code_lines;
+
+    auto close_list = [&]() {
+        if (in_list) {
+            html += "</ul>";
+            in_list = false;
+        }
+    };
+
+    for (const QString& raw_line : lines) {
+        QString trimmed = raw_line.trimmed();
+
+        if (trimmed.startsWith("```")) {
+            close_list();
+            if (!in_code_block) {
+                in_code_block = true;
+                code_lines.clear();
+            } else {
+                in_code_block = false;
+                html += "<pre style=\"background-color:#07080E;color:#34D399;padding:8px 10px;"
+                        "border:1px solid #2D2640;font-family:'Cascadia Mono','Consolas','Courier New',monospace;"
+                        "font-size:11px;margin:6px 0;\">"
+                     + code_lines.join("\n").toHtmlEscaped()
+                     + "</pre>";
+            }
+            continue;
+        }
+
+        if (in_code_block) {
+            code_lines.append(raw_line);
+            continue;
+        }
+
+        if (trimmed.isEmpty()) {
+            close_list();
+            continue;
+        }
+
+        if (trimmed.startsWith("### ")) {
+            close_list();
+            html += "<h4 style=\"color:#A78BFA;font-size:12px;font-weight:700;margin:10px 0 4px 0;\">"
+                 + format_inline_md(trimmed.mid(4).trimmed())
+                 + "</h4>";
+        } else if (trimmed.startsWith("## ")) {
+            close_list();
+            html += "<h3 style=\"color:#C4B5FD;font-size:13px;font-weight:700;margin:12px 0 6px 0;"
+                    "border-bottom:1px solid #2D2640;padding-bottom:3px;\">"
+                 + format_inline_md(trimmed.mid(3).trimmed())
+                 + "</h3>";
+        } else if (trimmed.startsWith("# ")) {
+            close_list();
+            html += "<h2 style=\"color:#F3E8FF;font-size:14px;font-weight:700;margin:6px 0 8px 0;\">"
+                 + format_inline_md(trimmed.mid(2).trimmed())
+                 + "</h2>";
+        } else if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+            if (!in_list) {
+                html += "<ul style=\"margin:4px 0 8px 18px;padding-left:0;\">";
+                in_list = true;
+            }
+            html += "<li style=\"margin:4px 0;color:#E2E8F0;line-height:1.45;\">"
+                 + format_inline_md(trimmed.mid(2).trimmed())
+                 + "</li>";
+        } else {
+            close_list();
+            html += "<p style=\"margin:4px 0 6px 0;color:#CBD5E1;line-height:1.45;\">"
+                 + format_inline_md(trimmed)
+                 + "</p>";
+        }
+    }
+
+    close_list();
+    if (in_code_block && !code_lines.isEmpty()) {
+        html += "<pre style=\"background-color:#07080E;color:#34D399;padding:8px 10px;"
+                "border:1px solid #2D2640;font-family:'Cascadia Mono','Consolas','Courier New',monospace;"
+                "font-size:11px;margin:6px 0;\">"
+             + code_lines.join("\n").toHtmlEscaped()
+             + "</pre>";
+    }
+
+    html += "</body></html>";
+    return html;
+}
+
 void UpdateDialog::setup_ui() {
     const bool is_id = (Translator::instance().language() == Language::Indonesian);
     setModal(true);
-    setMinimumSize(540, 400);
+    setMinimumSize(580, 460);
 
     if (info_.update_available) {
         setWindowTitle(is_id ? "Pembaruan Sabit Tersedia" : "Sabit Update Available");
@@ -541,27 +655,31 @@ void UpdateDialog::setup_ui() {
     auto* notes_card = new FluentCard(
         is_id ? "CATATAN RILIS & PERUBAHAN" : "RELEASE NOTES & CHANGELOG", this);
 
-    notes_edit_ = new QPlainTextEdit(notes_card);
-    notes_edit_->setReadOnly(true);
-    notes_edit_->setMinimumHeight(140);
+    notes_browser_ = new QTextBrowser(notes_card);
+    notes_browser_->setOpenExternalLinks(true);
+    notes_browser_->setReadOnly(true);
+    notes_browser_->setMinimumHeight(210);
+    notes_browser_->setStyleSheet(
+        "QTextBrowser { background-color: #0D0B16; color: #E2E8F0; "
+        "border: 1px solid #393053; border-radius: 6px; padding: 10px; }");
     QString notes_text = is_id ? info_.release_notes_id : info_.release_notes_en;
     if (notes_text.isEmpty()) {
         if (info_.update_available) {
             notes_text = is_id
-                ? "Pembaruan fitur, peningkatan stabilitas driver kamera, dan perbaikan bug tersedia pada rilis terbaru."
-                : "New features, camera driver stability improvements, and bug fixes are included in this release.";
+                ? "## Pembaruan Tersedia\n- Peningkatan stabilitas aplikasi dan pembaruan fitur observasi hilal.\n- Perbaikan kompatibilitas driver kamera dan antarmuka pengguna."
+                : "## Update Available\n- Stability improvements and new hilal observation features.\n- Camera driver compatibility and UI refinements.";
         } else if (info_.check_succeeded) {
             notes_text = is_id
-                ? "Tidak ada pembaruan tambahan yang diperlukan saat ini. Pemeriksaan pembaruan otomatis tetap aktif saat aplikasi dijalankan."
-                : "No updates are needed at this time. Automatic startup update checking remains enabled.";
+                ? "## Status Versi Terbaru\n- Tidak ada pembaruan tambahan yang diperlukan saat ini.\n- Pemeriksaan pembaruan otomatis tetap aktif saat aplikasi dijalankan."
+                : "## Up to Date\n- No updates are needed at this time.\n- Automatic startup update checking remains enabled.";
         } else {
             notes_text = is_id
-                ? "Pastikan koneksi internet aktif, atau buka halaman GitHub Releases secara manual untuk memeriksa paket installer terbaru."
-                : "Please verify your internet connection, or visit the GitHub Releases page manually to check for newer installers.";
+                ? "## Gagal Memeriksa Pembaruan\n- Pastikan koneksi internet aktif pada perangkat Anda.\n- Buka halaman GitHub Releases secara manual untuk mengunduh installer terbaru."
+                : "## Update Check Failed\n- Please verify your internet connection.\n- Visit the GitHub Releases page manually to download the latest installer.";
         }
     }
-    notes_edit_->setPlainText(notes_text);
-    notes_card->body_layout()->addWidget(notes_edit_);
+    notes_browser_->setHtml(format_release_notes_html(notes_text, info_, is_id));
+    notes_card->body_layout()->addWidget(notes_browser_);
     root->addWidget(notes_card);
 
     progress_bar_ = new QProgressBar(this);

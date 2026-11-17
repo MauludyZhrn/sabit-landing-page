@@ -15,11 +15,11 @@ export interface AppConfig {
 
 export const APP_CONFIG: AppConfig = {
   appName: 'Sabit',
-  version: '1.0.0',
+  version: '1.0.1',
   edition: 'Basic',
   githubRepoUrl: 'https://github.com/MauludyZhrn/Sabit',
-  windowsInstallerUrl: '/downloads/Sabit-Setup-v1.0.0-x64.exe',
-  windowsInstallerFilename: 'Sabit-Setup-v1.0.0-x64.exe',
+  windowsInstallerUrl: '/downloads/Sabit-Setup-v1.0.1-x64.exe',
+  windowsInstallerFilename: 'Sabit-Setup-v1.0.1-x64.exe',
   installerSizeLabel: '32.1 MB',
   installerArch: 'Windows 10 / 11 (64-bit)',
   lunarDataCredit: 'NASA/GSFC/Arizona State University — LRO/LOLA (CGI Moon Kit)'

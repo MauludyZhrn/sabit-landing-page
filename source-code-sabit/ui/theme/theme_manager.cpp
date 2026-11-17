@@ -652,6 +652,16 @@ QString ThemeManager::generate_stylesheet(ThemeType type) const {
             border-radius: 6px;
             padding: 6px;
         }
+        QPlainTextEdit#TerminalLogView {
+            background-color: #07080E;
+            color: #E2E8F0;
+            border: 1px solid #2A2438;
+            border-radius: 6px;
+            padding: 6px 8px;
+            font-family: 'Cascadia Mono', 'JetBrains Mono', 'Fira Code', 'Consolas', 'Courier New', monospace;
+            font-size: 11px;
+            selection-background-color: #3B2D54;
+        }
         QGroupBox {
             background-color: @SURFACE@;
             border: 1px solid @BORDER@;
